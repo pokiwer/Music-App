@@ -27,7 +27,9 @@ public class UserFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+
     private boolean isTxtCategoryVisible = false;
+    private boolean isTxtProfileVisible = false;
     ImageButton btnCategory, btnProfile;
     LinearLayoutCompat category, profile;
     LinearLayout txtCategory, txtProfile;
@@ -83,9 +85,19 @@ public class UserFragment extends Fragment {
                 isTxtCategoryVisible = true;
             }
         };
-
+        View.OnClickListener profileClickListener = view -> {
+            if (isTxtProfileVisible) {
+                txtProfile.setVisibility(View.GONE);
+                isTxtProfileVisible = false;
+            } else {
+                txtProfile.setVisibility(View.VISIBLE);
+                isTxtProfileVisible = true;
+            }
+        };
         btnCategory.setOnClickListener(categoryClickListener);
         category.setOnClickListener(categoryClickListener);
+        btnProfile.setOnClickListener(profileClickListener);
+        profile.setOnClickListener(profileClickListener);
         return rootView;
     }
 }
