@@ -1,17 +1,230 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".UserFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="User"
-        android:textSize="25dp"
-        android:textStyle="bold"
-        android:layout_gravity="center"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="15dp"
+        android:scrollbars="none">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:cardCornerRadius="15dp">
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="15dp">
+
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:orientation="horizontal">
+
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="60dp">
+
+                        <ImageView
+                            android:layout_width="60dp"
+                            android:layout_height="60dp"
+                            android:src="@drawable/ic_launcher_background" />
+                    </androidx.cardview.widget.CardView>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginLeft="20dp"
+                        android:text="Đặng Bảo Long"
+                        android:textSize="20dp"
+                        android:textStyle="bold" />
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="2dp"
+                    android:alpha="0.5"
+                    android:background="@color/black" />
+
+                <androidx.appcompat.widget.LinearLayoutCompat
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Account Settings"
+                        android:textSize="20dp" />
+
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/category"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        >
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:text="Category"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
+                        <ImageButton
+                            android:id="@+id/btnCategory"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:backgroundTint="@color/white"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_down" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+                    <LinearLayout
+                        android:id="@+id/txtCategory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingLeft="20dp"
+                        android:visibility="gone">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Album library"
+                            android:textSize="20dp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Favorite songs"
+                            android:textSize="20dp"/>
+                    </LinearLayout>
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:id="@+id/profile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:text="Profile"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
+                        <ImageButton
+                            android:id="@+id/btnProfile"
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:backgroundTint="@color/white"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_down" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+                    <LinearLayout
+                        android:id="@+id/txtProfile"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:paddingLeft="20dp"
+                        android:visibility="">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Edit profile"
+                            android:textSize="20dp"/>
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Change password"
+                            android:textSize="20dp"/>
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:text="Add payment method"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
+                        <ImageButton
+                            android:layout_width="45dp"
+                            android:layout_height="45dp"
+                            android:backgroundTint="@color/white"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_plus" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+
+                    <androidx.appcompat.widget.LinearLayoutCompat
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:text="Push notification"
+                            android:textColor="@color/black"
+                            android:textSize="20dp" />
+
+
+                        <Switch
+                            android:layout_width="56dp"
+                            android:layout_height="29dp" />
+                    </androidx.appcompat.widget.LinearLayoutCompat>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="2dp"
+                        android:alpha="0.5"
+                        android:background="@color/black"
+                        android:layout_marginTop="10dp"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="More"
+                        android:textSize="20dp"
+                        android:layout_marginTop="10dp"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="About us"
+                        android:textSize="20dp"
+                        android:textColor="@color/black"
+                        android:layout_marginTop="10dp"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Privacy policy"
+                        android:textColor="@color/black"
+                        android:textSize="20dp"
+                        android:layout_marginTop="10dp"/>
+
+                </androidx.appcompat.widget.LinearLayoutCompat>
+
+            </androidx.appcompat.widget.LinearLayoutCompat>
+        </androidx.cardview.widget.CardView>
+    </ScrollView>
 
 </FrameLayout>
