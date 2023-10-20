@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:fontFamily="sans-serif"
-            android:text="Music"
+            android:text="Muzik"
             android:textColor="@color/black"
             android:textSize="40dp"
             android:textStyle="bold" />
