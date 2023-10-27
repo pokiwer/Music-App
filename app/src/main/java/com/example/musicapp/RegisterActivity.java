@@ -1,5 +1,6 @@
 package com.example.musicapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -9,11 +10,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class RegisterActivity extends AppCompatActivity {
-    TextView txtAccept, txtEmailReg, txtPassReg,txtConfirm, txtLogin;
+    TextView txtAccept, txtEmailReg, txtPassReg, txtConfirm, txtLogin;
     EditText edtEmailReg, edtPassReg, edtConfirm;
     Button btnRegister;
     private boolean isChecked = false;
@@ -63,44 +68,50 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String email = edtEmailReg.getText().toString();
-                String pass = edtPassReg.getText().toString();
-                String confirm = edtConfirm.getText().toString();
-                if(!email.isEmpty()){
+                String email = edtEmailReg.getText().toString().trim();
+                String pass = edtPassReg.getText().toString().trim();
+                String confirm = edtConfirm.getText().toString().trim();
+                if (!email.isEmpty()) {
                     txtEmailReg.setTextColor(Color.parseColor("#000000"));
-                    if(!pass.isEmpty())
-                    {
+                    if (!pass.isEmpty()) {
                         txtPassReg.setTextColor(Color.parseColor("#000000"));
-                        if (!confirm.isEmpty())
-                        {
+                        if (!confirm.isEmpty()) {
                             txtConfirm.setTextColor(Color.parseColor("#000000"));
-                            if (pass.equals(confirm))
-                            {
+                            if (pass.equals(confirm)) {
                                 txtConfirm.setTextColor(Color.parseColor("#000000"));
-                                if (isChecked)
-                                {
-                                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
-                                    startActivity(intent);
-                                }
-                                else {
+                                if (isChecked) {
+                                    txtAccept.setTextColor(Color.parseColor("#000000"));
+                                    FirebaseAuth auth = FirebaseAuth.getInstance();
+                                    auth.createUserWithEmailAndPassword(email, pass)
+                                            .addOnCompleteListener(RegisterActivity.this, new OnCompleteListener<AuthResult>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<AuthResult> task) {
+                                                    if (task.isSuccessful()) {
+                                                        // Sign in success, update UI with the signed-in user's information
+                                                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                                                        startActivity(intent);
+                                                        finishAffinity();
+                                                    } else {
+                                                        // If sign in fails, display a message to the user.
+                                                        Toast.makeText(RegisterActivity.this, "Authentication failed.",
+                                                                Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                } else {
                                     txtAccept.setTextColor(Color.parseColor("#ff0000"));
                                 }
-                            }
-                            else
-                            {
+                            } else {
                                 txtConfirm.setTextColor(Color.parseColor("#ff0000"));
                                 txtConfirm.setText("Password incorrect");
                             }
-                        }
-                        else {
+                        } else {
                             txtConfirm.setTextColor(Color.parseColor("#ff0000"));
                         }
-                    }
-                    else {
+                    } else {
                         txtPassReg.setTextColor(Color.parseColor("#ff0000"));
                     }
-                }
-                else {
+                } else {
                     txtEmailReg.setTextColor(Color.parseColor("#ff0000"));
                 }
             }
