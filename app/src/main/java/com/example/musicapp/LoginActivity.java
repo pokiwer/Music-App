@@ -74,8 +74,11 @@ public class LoginActivity extends AppCompatActivity {
                                         if (task.isSuccessful()) {
                                             // Sign in success, update UI with the signed-in user's information
                                             FirebaseUser user = auth.getCurrentUser();
+                                            String uid = user.getUid();
                                             Intent intent = new Intent(LoginActivity.this,MainActivity.class);
+                                            intent.putExtra("userID",uid);
                                             startActivity(intent);
+                                            finishAffinity();
                                         } else {
                                             // If sign in fails, display a message to the user.
                                             Dialog customDialog = new Dialog(LoginActivity.this);

@@ -25,6 +25,10 @@ public class MainActivity extends AppCompatActivity {
         Mapping();
         BtnControl();
         updateButtonState(btnDiscover,"Discover");
+        String userUid = getIntent().getStringExtra("userID");
+        Bundle bundle = new Bundle();
+        bundle.putString("userID", userUid);
+        userFragment.setArguments(bundle);
     }
 
     private void Mapping()

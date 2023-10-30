@@ -48,7 +48,7 @@
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
                         android:layout_marginLeft="20dp"
-                        android:text="Đặng Bảo Long"
+                        android:text="Unknow"
                         android:textSize="20dp"
                         android:textStyle="bold" />
                 </androidx.appcompat.widget.LinearLayoutCompat>
@@ -85,7 +85,9 @@
                             android:layout_weight="1"
                             android:text="Category"
                             android:textColor="@color/black"
-                            android:textSize="20dp" />
+                            android:textSize="20dp"
+                            android:drawableStart="@drawable/ic_category"
+                            android:drawablePadding="5dp"/>
 
                         <ImageButton
                             android:id="@+id/btnCategory"
@@ -126,7 +128,9 @@
                             android:layout_weight="1"
                             android:text="Profile"
                             android:textColor="@color/black"
-                            android:textSize="20dp" />
+                            android:textSize="20dp"
+                            android:drawableStart="@drawable/ic_user"
+                            android:drawablePadding="5dp"/>
 
                         <ImageButton
                             android:id="@+id/btnProfile"
@@ -167,7 +171,9 @@
                             android:layout_weight="1"
                             android:text="Add payment method"
                             android:textColor="@color/black"
-                            android:textSize="20dp" />
+                            android:textSize="20dp"
+                            android:drawableStart="@drawable/ic_payment"
+                            android:drawablePadding="5dp"/>
 
                         <ImageButton
                             android:layout_width="45dp"
@@ -189,7 +195,9 @@
                             android:layout_weight="1"
                             android:text="Push notification"
                             android:textColor="@color/black"
-                            android:textSize="20dp" />
+                            android:textSize="20dp"
+                            android:drawableStart="@drawable/ic_notifiaction"
+                            android:drawablePadding="5dp"/>
 
 
                         <Switch
@@ -214,14 +222,18 @@
                         android:text="About us"
                         android:textSize="20dp"
                         android:textColor="@color/black"
-                        android:layout_marginTop="10dp"/>
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_about"
+                        android:drawablePadding="5dp"/>
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Privacy policy"
                         android:textColor="@color/black"
                         android:textSize="20dp"
-                        android:layout_marginTop="10dp"/>
+                        android:layout_marginTop="10dp"
+                        android:drawableStart="@drawable/ic_policy"
+                        android:drawablePadding="5dp"/>
                     <TextView
                         android:id="@+id/txtLogout"
                         android:layout_width="wrap_content"
