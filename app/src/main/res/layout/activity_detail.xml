@@ -23,6 +23,7 @@
             app:cardElevation="0dp">
 
             <ImageView
+                android:id="@+id/btnReturn"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:layout_gravity="center"
@@ -40,6 +41,7 @@
             app:cardCornerRadius="60dp">
 
             <ImageView
+                android:id="@+id/imgArtist"
                 android:layout_width="124dp"
                 android:layout_height="124dp"
                 android:src="@mipmap/ic_launcher" />
@@ -59,6 +61,7 @@
             app:cardElevation="0dp">
 
             <ImageView
+                android:id="@+id/btnFollow"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
                 android:layout_gravity="center"

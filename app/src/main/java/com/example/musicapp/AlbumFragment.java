@@ -2,11 +2,18 @@ package com.example.musicapp;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,6 +30,11 @@ public class AlbumFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private ArrayList<Album> albumArrayList;
+    private int[] img;
+    private String[] name;
+    private String[] title;
+    private RecyclerView recyclerview;
 
     public AlbumFragment() {
         // Required empty public constructor
@@ -59,6 +71,57 @@ public class AlbumFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_album, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_album, container, false);
+        Mapping(rootView);
+
+        return rootView;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        dataInit();
+        recyclerview = view.findViewById(R.id.rcvAlbum);
+        recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerview.setHasFixedSize(true);
+        AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), albumArrayList);
+        recyclerview.setAdapter(albumAdapter);
+        albumAdapter.notifyDataSetChanged();
+    }
+
+    private void Mapping(View rootView) {
+
+    }
+
+    private void dataInit() {
+        albumArrayList = new ArrayList<>();
+        img = new int[]{
+                R.drawable.ic_launcher_background,
+                R.drawable.ic_launcher_background,
+                R.drawable.ic_launcher_background,
+                R.drawable.ic_launcher_background,
+                R.drawable.ic_launcher_background,
+        };
+
+        name = new String[]{
+                "Nguyễn Văn A",
+                "Nguyễn Văn B",
+                "Nguyễn Văn C",
+                "Nguyễn Văn D",
+                "Nguyễn Văn E",
+        };
+
+        title = new String[]{
+                "Song 1",
+                "Song 2",
+                "Song 3",
+                "Song 4",
+                "Song 5",
+        };
+        for (int i = 0; i < name.length; i++)
+        {
+            Album album = new Album(img[i],name[i],title[i]);
+            albumArrayList.add(album);
+        }
     }
 }

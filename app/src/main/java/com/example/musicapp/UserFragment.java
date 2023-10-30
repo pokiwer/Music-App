@@ -4,9 +4,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +20,11 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -108,6 +115,7 @@ public class UserFragment extends Fragment {
 
         return rootView;
     }
+
     private void toggleVisibility(LinearLayout linearLayout) {
         if (linearLayout.getVisibility() == View.VISIBLE) {
             linearLayout.setVisibility(View.GONE);
@@ -115,6 +123,7 @@ public class UserFragment extends Fragment {
             linearLayout.setVisibility(View.VISIBLE);
         }
     }
+
     private void eventClick() {
 
         View.OnClickListener categoryClickListener = view -> toggleVisibility(txtCategory);
@@ -126,27 +135,36 @@ public class UserFragment extends Fragment {
 
         txtLogout.setOnClickListener(view -> {
             FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(getActivity(),LoginSrceenActivity.class);
+            Intent intent = new Intent(getActivity(), LoginSrceenActivity.class);
             startActivity(intent);
             getActivity().finish();
         });
     }
 
     private void showUser() {
+        String userUid = getArguments().getString("userID");
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null)
-        {
-            return;
-        }
-        String name = user.getDisplayName();
+        if(user == null) return;
         String email = user.getEmail();
-        Uri photoUrl = user.getPhotoUrl();
-        if (name != null)
-        {
-            txtUser.setText(name);
-        }
-        else txtUser.setText(email);
-        Glide.with(UserFragment.this).load(photoUrl).error(R.drawable.ic_launcher_background).into(imgUser);
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        String path = "user/" + userUid + "/name";
+        DatabaseReference myRef = database.getReference(path);
+        // Read from the database
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // This method is called once with the initial value and again
+                // whenever data at this location is updated.
+                String value = dataSnapshot.getValue(String.class);
+                txtUser.setText(value);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                // Failed to read value
+                txtUser.setText(email);
+            }
+        });
+//        Glide.with(UserFragment.this).load(photoUrl).error(R.drawable.ic_launcher_background).into(imgUser);
 
     }
 
