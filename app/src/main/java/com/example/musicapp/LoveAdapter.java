@@ -32,9 +32,12 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         Love love = loveArrayList.get(position);
-        holder.imgArtist.setImageResource(love.getResourceID());
+        if (love == null){
+            return;
+        }
+        holder.imgArtist.setImageResource(R.drawable.bg_app_background);
         holder.txtArtist.setText(love.getName());
-        holder.txtNumsong.setText(love.getNumSong());
+        holder.txtNumsong.setText(String.valueOf(love.getNumSong()) + " songs");
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -1,21 +1,32 @@
 package com.example.musicapp;
 
 public class Love {
-    private int resourceID;
-    private String name,numSong;
+    private int id, numSong;
+    private String name;
 
-    public Love(int resourceID, String name, String numSong) {
-        this.resourceID = resourceID;
-        this.name = name;
+    public Love() {
+    }
+
+    public Love(int id, int numSong, String name) {
+        this.id = id;
         this.numSong = numSong;
+        this.name = name;
     }
 
-    public int getResourceID() {
-        return resourceID;
+    public int getId() {
+        return id;
     }
 
-    public void setResourceID(int resourceID) {
-        this.resourceID = resourceID;
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getNumSong() {
+        return numSong;
+    }
+
+    public void setNumSong(int numSong) {
+        this.numSong = numSong;
     }
 
     public String getName() {
@@ -24,13 +35,5 @@ public class Love {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getNumSong() {
-        return numSong;
-    }
-
-    public void setNumSong(String numSong) {
-        this.numSong = numSong;
     }
 }
