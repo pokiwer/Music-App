@@ -1,12 +1,15 @@
 package com.example.musicapp;
 
 import android.content.Intent;
+
 import android.net.Uri;
 import android.os.Bundle;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.fragment.app.Fragment;
+
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +21,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -25,6 +30,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -142,29 +149,47 @@ public class UserFragment extends Fragment {
     }
 
     private void showUser() {
+        //Show thông tin người dùng
         String userUid = getArguments().getString("userID");
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if(user == null) return;
+        if (user == null) return;
         String email = user.getEmail();
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        String path = "user/" + userUid + "/name";
+        String path = "user/" + userUid;
         DatabaseReference myRef = database.getReference(path);
-        // Read from the database
-        myRef.addValueEventListener(new ValueEventListener() {
+        ValueEventListener userListener = new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // This method is called once with the initial value and again
-                // whenever data at this location is updated.
-                String value = dataSnapshot.getValue(String.class);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String value = dataSnapshot.child("name").getValue(String.class);
+                String image = dataSnapshot.child("image").getValue(String.class);
                 txtUser.setText(value);
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference storageRef = storage.getReference();
+                StorageReference pathReference = storageRef.child("user/" + image);
+                pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        String imageUrl = uri.toString();
+                        Glide.with(getActivity())
+                                .load(imageUrl)
+                                .error(R.drawable.ic_user)
+                                .into(imgUser);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d("TAG", "Failed ");
+                    }
+                });
             }
+
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                // Failed to read value
+            public void onCancelled(DatabaseError databaseError) {
                 txtUser.setText(email);
             }
-        });
-//        Glide.with(UserFragment.this).load(photoUrl).error(R.drawable.ic_launcher_background).into(imgUser);
+        };
+        myRef.addValueEventListener(userListener);
+
 
     }
 

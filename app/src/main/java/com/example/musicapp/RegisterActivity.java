@@ -3,7 +3,9 @@ package com.example.musicapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -16,6 +18,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class RegisterActivity extends AppCompatActivity {
     TextView txtAccept, txtEmailReg, txtPassReg, txtConfirm, txtLogin;
@@ -87,8 +90,10 @@ public class RegisterActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                                     if (task.isSuccessful()) {
-                                                        // Sign in success, update UI with the signed-in user's information
+                                                        FirebaseUser user = task.getResult().getUser();
+                                                        String uid = user.getUid();
                                                         Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                                                        intent.putExtra("userID",uid);
                                                         startActivity(intent);
                                                         finishAffinity();
                                                     } else {

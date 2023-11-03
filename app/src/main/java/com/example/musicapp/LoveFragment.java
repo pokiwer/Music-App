@@ -1,5 +1,7 @@
 package com.example.musicapp;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -9,11 +11,14 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.firebase.Firebase;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -38,9 +43,6 @@ public class LoveFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private ArrayList<Love> loveArrayList;
-    private int[] img;
-    private String[] name;
-    private String[] numSong;
     private RecyclerView recyclerview;
 
     public LoveFragment() {
@@ -85,13 +87,15 @@ public class LoveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        dataInit();
+        loveArrayList = new ArrayList<>();
+        LoveAdapter loveAdapter = new LoveAdapter(getContext(), loveArrayList);
+        dataInit(loveAdapter);
         recyclerview = view.findViewById(R.id.rcvLove);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
-        LoveAdapter loveAdapter = new LoveAdapter(getContext(), loveArrayList);
+
         recyclerview.setAdapter(loveAdapter);
-        loveAdapter.notifyDataSetChanged();
+
         loveAdapter.setOnUserClickListener(new LoveAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Love love) {
@@ -101,25 +105,38 @@ public class LoveFragment extends Fragment {
         });
     }
 
-    private void dataInit() {
+    private void dataInit(LoveAdapter loveAdapter) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("artist");
         // Read from the database
-        myRef.addValueEventListener(new ValueEventListener() {
+        myRef.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot artistSnapshot : dataSnapshot.getChildren()) {
-                    String name = artistSnapshot.child("name").getValue(String.class);
-                    int img = R.drawable.bg_app_background;
-                    String numSong = "123";
-                    Love love = new Love(img, name, numSong);
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Love love = snapshot.getValue(Love.class);
+                if (love != null) {
                     loveArrayList.add(love);
+                    loveAdapter.notifyDataSetChanged();
                 }
+
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                // Failed to read value
 
             }
         });
