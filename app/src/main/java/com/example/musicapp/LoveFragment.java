@@ -1,7 +1,5 @@
 package com.example.musicapp;
 
-import static android.content.ContentValues.TAG;
-
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -11,19 +9,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
-import com.google.firebase.Firebase;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
@@ -42,7 +36,7 @@ public class LoveFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private ArrayList<Love> loveArrayList;
+    private ArrayList<Artist> artistArrayList;
     private RecyclerView recyclerview;
 
     public LoveFragment() {
@@ -87,18 +81,17 @@ public class LoveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        loveArrayList = new ArrayList<>();
-        LoveAdapter loveAdapter = new LoveAdapter(getContext(), loveArrayList);
+        artistArrayList = new ArrayList<>();
+        LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList);
         dataInit(loveAdapter);
         recyclerview = view.findViewById(R.id.rcvLove);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
-
         recyclerview.setAdapter(loveAdapter);
 
         loveAdapter.setOnUserClickListener(new LoveAdapter.OnUserClickListener() {
             @Override
-            public void onUserClick(Love love) {
+            public void onUserClick(Artist artist) {
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
                 startActivity(intent);
             }
@@ -112,9 +105,9 @@ public class LoveFragment extends Fragment {
         myRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
-                Love love = snapshot.getValue(Love.class);
-                if (love != null) {
-                    loveArrayList.add(love);
+                Artist artist = snapshot.getValue(Artist.class);
+                if (artist != null) {
+                    artistArrayList.add(artist);
                     loveAdapter.notifyDataSetChanged();
                 }
 

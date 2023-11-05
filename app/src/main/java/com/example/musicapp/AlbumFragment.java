@@ -12,6 +12,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +36,7 @@ public class AlbumFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private ArrayList<Album> albumArrayList;
-    private int[] img;
-    private String[] name;
-    private String[] title;
+    private ArrayList<Song> songArrayList;
     private RecyclerView recyclerview;
 
     public AlbumFragment() {
@@ -73,55 +76,60 @@ public class AlbumFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_album, container, false);
         Mapping(rootView);
-
         return rootView;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        dataInit();
+        songArrayList = new ArrayList<>();
+        AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), songArrayList);
+        dataInit(albumAdapter);
         recyclerview = view.findViewById(R.id.rcvAlbum);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
-        AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), albumArrayList);
         recyclerview.setAdapter(albumAdapter);
-        albumAdapter.notifyDataSetChanged();
+    }
+
+    private void dataInit(AlbumAdapter albumAdapter) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("song");
+        myRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Song song = snapshot.getValue(Song.class);
+                if (song != null) {
+                    songArrayList.add(song);
+                    albumAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
     }
 
     private void Mapping(View rootView) {
 
     }
 
-    private void dataInit() {
-        albumArrayList = new ArrayList<>();
-        img = new int[]{
-                R.drawable.ic_launcher_background,
-                R.drawable.ic_launcher_background,
-                R.drawable.ic_launcher_background,
-                R.drawable.ic_launcher_background,
-                R.drawable.ic_launcher_background,
-        };
 
-        name = new String[]{
-                "Nguyễn Văn A",
-                "Nguyễn Văn B",
-                "Nguyễn Văn C",
-                "Nguyễn Văn D",
-                "Nguyễn Văn E",
-        };
-
-        title = new String[]{
-                "Song 1",
-                "Song 2",
-                "Song 3",
-                "Song 4",
-                "Song 5",
-        };
-        for (int i = 0; i < name.length; i++)
-        {
-            Album album = new Album(img[i],name[i],title[i]);
-            albumArrayList.add(album);
-        }
-    }
 }

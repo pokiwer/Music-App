@@ -20,31 +20,31 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
-public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> {
+public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.MyViewHolder> {
     Context context;
     ArrayList<Artist> artistArrayList;
 
-    private OnUserClickListener clickListener;
-    public LoveAdapter(Context context, ArrayList<Artist> artistArrayList) {
+    private PopularAdapter.OnUserClickListener clickListener;
+
+    public PopularAdapter(Context context, ArrayList<Artist> artistArrayList) {
         this.context = context;
         this.artistArrayList = artistArrayList;
     }
 
     @NonNull
     @Override
-    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.love, parent, false);
-        return new MyViewHolder(view);
+    public PopularAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.artist, parent, false);
+        return new PopularAdapter.MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull PopularAdapter.MyViewHolder holder, int position) {
         Artist artist = artistArrayList.get(position);
         if (artist == null){
             return;
         }
         holder.txtArtist.setText(artist.getName());
-        holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
         loadImage(artist,holder);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,8 +53,7 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
             }
         });
     }
-
-    private void loadImage(Artist artist, MyViewHolder holder) {
+    private void loadImage(Artist artist, PopularAdapter.MyViewHolder holder) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference pathReference = storageRef.child("artist/" + artist.getImage());
@@ -80,22 +79,22 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
         return artistArrayList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public class MyViewHolder extends RecyclerView.ViewHolder{
         ImageView imgArtist;
-        TextView txtArtist, txtNumsong;
+        TextView txtArtist;
 
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             imgArtist = itemView.findViewById(R.id.imgArtist);
             txtArtist = itemView.findViewById(R.id.txtArtist);
-            txtNumsong = itemView.findViewById(R.id.txtNumsong);
+
         }
     }
+
     public interface OnUserClickListener {
         void onUserClick(Artist artist);
     }
-    public void setOnUserClickListener(OnUserClickListener clickListener) {
+    public void setOnUserClickListener(PopularAdapter.OnUserClickListener clickListener) {
         this.clickListener = clickListener;
     }
-
 }

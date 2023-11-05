@@ -1,25 +1,18 @@
 package com.example.musicapp;
 
 public class User {
-    private int id;
-    private String name, image, address;
+
+    private String name, image, address, phone, uid;
 
     public User() {
     }
 
-    public User(int id, String name, String image, String address) {
-        this.id = id;
+    public User(String name, String image, String address, String phone, String uid) {
         this.name = name;
         this.image = image;
         this.address = address;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+        this.phone = phone;
+        this.uid = uid;
     }
 
     public String getName() {
@@ -44,5 +37,21 @@ public class User {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }

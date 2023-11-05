@@ -82,7 +82,7 @@
                         android:id="@+id/rcvLove"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        tools:listitem="@layout/love"/>
+                        tools:listitem="@layout/artist"/>
                 </LinearLayout>
             </ScrollView>
         </LinearLayout>
