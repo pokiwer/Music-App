@@ -2,11 +2,26 @@ package com.example.musicapp;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,6 +38,9 @@ public class DiscoverFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private ArrayList<Artist> artistArrayList;
+    private ArrayList<Song> famousArrayList,newsArrayList;
+    private RecyclerView famous, news, popular;
 
     public DiscoverFragment() {
         // Required empty public constructor
@@ -59,6 +77,146 @@ public class DiscoverFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_discover, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_discover, container, false);
+        return rootView;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        //Thêm List các bài hát phổ biến
+        famousArrayList = new ArrayList<>();
+        FamousAdapter famousAdapter = new FamousAdapter(getContext(), famousArrayList);
+        dataInitFamous(famousAdapter, view);
+        //Thêm list các bài hát mới
+        newsArrayList = new ArrayList<>();
+        NewsAdapter newsAdapter = new NewsAdapter(getContext(), newsArrayList);
+        dataInitNews(newsAdapter, view);
+        //Thêm list danh sách các nghệ sĩ
+        artistArrayList = new ArrayList<>();
+        PopularAdapter popularAdapter = new PopularAdapter(getContext(), artistArrayList);
+        dataInitPopular(popularAdapter, view);
+    }
+
+    private void dataInitNews(NewsAdapter newsAdapter, View view) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference songdb = database.getReference("song");
+        Query query = songdb.orderByChild("id");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Song news = snapshot.getValue(Song.class);
+                if (news != null) {
+                    newsArrayList.add(0,news);
+                    newsAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        news = view.findViewById(R.id.rcvNew);
+        news.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        news.setAdapter(newsAdapter);
+        news.setHasFixedSize(true);
+    }
+
+    private void dataInitFamous(FamousAdapter famousAdapter, View view) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference songdb = database.getReference("song");
+        Query query = songdb.orderByChild("numListen");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Song famous = snapshot.getValue(Song.class);
+                if (famous != null) {
+                    famousArrayList.add(0,famous);
+                    famousAdapter.notifyDataSetChanged();
+                    Log.d("TAG", "Size of famousArrayList: " + famousArrayList.size());
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        famous = view.findViewById(R.id.rcvFamous);
+        famous.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        famous.setHasFixedSize(true);
+        famous.setAdapter(famousAdapter);
+        famous.setHasFixedSize(true);
+    }
+
+    private void dataInitPopular(PopularAdapter popularAdapter, View view) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference artistdb = database.getReference("artist");
+        Query query = artistdb.orderByChild("numFollow");
+        query.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Artist artist = snapshot.getValue(Artist.class);
+                if (artist != null) {
+                    artistArrayList.add(0,artist);
+                    popularAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        popular = view.findViewById(R.id.rcvPopular);
+        popular.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        popular.setAdapter(popularAdapter);
+        popular.setHasFixedSize(true);
     }
 }
