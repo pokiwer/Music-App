@@ -15,6 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -22,11 +27,13 @@ import java.util.ArrayList;
 
 public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> {
     Context context;
+    String userId;
     ArrayList<Artist> artistArrayList;
 
     private OnUserClickListener clickListener;
-    public LoveAdapter(Context context, ArrayList<Artist> artistArrayList) {
+    public LoveAdapter(Context context, ArrayList<Artist> artistArrayList, String userId) {
         this.context = context;
+        this.userId = userId;
         this.artistArrayList = artistArrayList;
     }
 
@@ -39,13 +46,34 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference followDB = database.getReference("follow/" + userId + "/artist");
         Artist artist = artistArrayList.get(position);
         if (artist == null){
             return;
         }
-        holder.txtArtist.setText(artist.getName());
-        holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
-        loadImage(artist,holder);
+        followDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild(String.valueOf(artist.getId()))) {
+                        holder.txtArtist.setText(artist.getName());
+                        holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
+                        loadImage(artist, holder);
+                }
+                else {
+                    int artistIndex = artistArrayList.indexOf(artist);
+                    if (artistIndex != -1) {
+                        artistArrayList.remove(artistIndex);
+                        notifyItemRemoved(artistIndex);
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

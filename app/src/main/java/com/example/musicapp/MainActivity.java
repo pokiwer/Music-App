@@ -31,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putString("userID", userUid);
         userFragment.setArguments(bundle);
+        loveFragment.setArguments(bundle);
+        albumFragment.setArguments(bundle);
         SharedPreferences sharedPreferences = getSharedPreferences("account", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("uid",userUid);

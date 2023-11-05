@@ -82,8 +82,9 @@ public class AlbumFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        String userUid = getArguments().getString("userID");
         songArrayList = new ArrayList<>();
-        AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), songArrayList);
+        AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), userUid, songArrayList);
         dataInit(albumAdapter);
         recyclerview = view.findViewById(R.id.rcvAlbum);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));

@@ -15,6 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -22,10 +27,12 @@ import java.util.ArrayList;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder> {
     Context context;
+    String userId;
     ArrayList<Song> songArrayList;
 
-    public AlbumAdapter(Context context, ArrayList<Song> songArrayList) {
+    public AlbumAdapter(Context context, String userId, ArrayList<Song> songArrayList) {
         this.context = context;
+        this.userId = userId;
         this.songArrayList = songArrayList;
     }
 
@@ -38,11 +45,46 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference albumDB = database.getReference("album/" + userId + "/song");
+        DatabaseReference artistDB = database.getReference("artist");
         Song album = songArrayList.get(position);
         if (album == null) return;
-        loadImage(album,holder);
-        holder.txtArtist.setText(String.valueOf(album.getArtist()));
-        holder.txtTitle.setText(album.getTitle());
+        albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild(String.valueOf(album.getId())))
+                {
+                    artistDB.child(String.valueOf(album.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            String artistName = snapshot.child("name").getValue(String.class);
+                            holder.txtArtist.setText(String.valueOf(artistName));
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                    loadImage(album,holder);
+                    holder.txtTitle.setText(album.getTitle());
+                }
+                else {
+                    int albumIndex = songArrayList.indexOf(album);
+                    if (albumIndex != -1) {
+                        songArrayList.remove(albumIndex);
+                        notifyItemRemoved(albumIndex);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
     }
 
     private void loadImage(Song album, MyViewHolder holder) {

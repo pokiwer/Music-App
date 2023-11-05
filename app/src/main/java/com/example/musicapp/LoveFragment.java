@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,8 +82,9 @@ public class LoveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        String userUid = getArguments().getString("userID");
         artistArrayList = new ArrayList<>();
-        LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList);
+        LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList, userUid);
         dataInit(loveAdapter);
         recyclerview = view.findViewById(R.id.rcvLove);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -100,9 +102,9 @@ public class LoveFragment extends Fragment {
 
     private void dataInit(LoveAdapter loveAdapter) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("artist");
+        DatabaseReference artistdb = database.getReference("artist");
         // Read from the database
-        myRef.addChildEventListener(new ChildEventListener() {
+        artistdb.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Artist artist = snapshot.getValue(Artist.class);
