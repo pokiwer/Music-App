@@ -38,7 +38,8 @@
                 android:layout_height="match_parent"
                 android:text="New music"
                 android:textSize="15dp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
 
 
             <LinearLayout
@@ -50,8 +51,6 @@
                     android:id="@+id/rcvNew"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
-
-
             </LinearLayout>
 
 
@@ -60,7 +59,8 @@
                 android:layout_height="match_parent"
                 android:text="Popular Artists"
                 android:textSize="15dp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
 
 
             <LinearLayout
@@ -72,9 +72,26 @@
                     android:id="@+id/rcvPopular"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    tools:listitem="@layout/artist" />
+                    />
             </LinearLayout>
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="List music"
+                android:textSize="15dp"
+                android:textStyle="bold"
+                android:textColor="@color/black"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:orientation="horizontal">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rcvSong"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
         </LinearLayout>
 

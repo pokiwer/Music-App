@@ -39,8 +39,8 @@ public class DiscoverFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private ArrayList<Artist> artistArrayList;
-    private ArrayList<Song> famousArrayList,newsArrayList;
-    private RecyclerView famous, news, popular;
+    private ArrayList<Song> famousArrayList,newsArrayList, songArrayList;
+    private RecyclerView famous, news, popular, song;
 
     public DiscoverFragment() {
         // Required empty public constructor
@@ -84,7 +84,7 @@ public class DiscoverFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //Thêm List các bài hát phổ biến
+        //Thêm list các bài hát phổ biến
         famousArrayList = new ArrayList<>();
         FamousAdapter famousAdapter = new FamousAdapter(getContext(), famousArrayList);
         dataInitFamous(famousAdapter, view);
@@ -92,10 +92,53 @@ public class DiscoverFragment extends Fragment {
         newsArrayList = new ArrayList<>();
         NewsAdapter newsAdapter = new NewsAdapter(getContext(), newsArrayList);
         dataInitNews(newsAdapter, view);
-        //Thêm list danh sách các nghệ sĩ
+        //Thêm list  các nghệ sĩ
         artistArrayList = new ArrayList<>();
         PopularAdapter popularAdapter = new PopularAdapter(getContext(), artistArrayList);
         dataInitPopular(popularAdapter, view);
+        //Thêm list các bài hát
+        songArrayList = new ArrayList<>();
+        SongAdapter songAdapter = new SongAdapter(getContext(),songArrayList,1);
+        dataInitSong(songAdapter,view);
+    }
+
+    private void dataInitSong(SongAdapter songAdapter, View view) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference songDB = database.getReference("song");
+        songDB.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+                Song song = snapshot.getValue(Song.class);
+                if (song != null) {
+                    songArrayList.add(0,song);
+                    songAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot snapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        song = view.findViewById(R.id.rcvSong);
+        song.setLayoutManager(new LinearLayoutManager(getContext()));
+        song.setAdapter(songAdapter);
+        song.setHasFixedSize(true);
     }
 
     private void dataInitNews(NewsAdapter newsAdapter, View view) {
@@ -149,7 +192,6 @@ public class DiscoverFragment extends Fragment {
                 if (famous != null) {
                     famousArrayList.add(0,famous);
                     famousAdapter.notifyDataSetChanged();
-                    Log.d("TAG", "Size of famousArrayList: " + famousArrayList.size());
                 }
             }
 
