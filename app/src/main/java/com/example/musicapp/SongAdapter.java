@@ -1,11 +1,14 @@
 package com.example.musicapp;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,34 +28,35 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
-public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> {
+public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> {
     Context context;
-    ArrayList<Song> newArrayList;
-
-    public NewsAdapter(Context context, ArrayList<Song> newArrayList) {
+    ArrayList<Song> songArrayList;
+    int type;
+    private SongAdapter.OnUserClickListener clickListener;
+    public SongAdapter(Context context, ArrayList<Song> songArrayList, int type) {
         this.context = context;
-        this.newArrayList = newArrayList;
+        this.songArrayList = songArrayList;
+        this.type = type;
     }
 
     @NonNull
     @Override
-    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.news, parent, false);
-        return new MyViewHolder(view);
+    public SongAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.song, parent, false);
+        return new SongAdapter.MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull SongAdapter.MyViewHolder holder, int position) {
+        Song song = songArrayList.get(position);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference artistDB = database.getReference("artist");
-        Song song = newArrayList.get(position);
+        DatabaseReference artistDB = database.getReference("artist/" + song.getArtist());
         if (song == null){
             return;
         }
-        int artistID = song.getArtist();
-        if (artistID != 0)
-        {
-            artistDB.child(String.valueOf(artistID)).addListenerForSingleValueEvent(new ValueEventListener() {
+        //type = 1 => list tổng hợp tất cả bài hát
+        if (type == 1){
+            artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     if (snapshot.exists())
@@ -63,20 +67,37 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> 
                 }
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
+
                 }
             });
+            holder.txtTitle.setText(song.getTitle());
+            loadImage(song,holder);
         }
-        else {
-            holder.txtArtist.setText("Unknow artist");
-        }
-        holder.txtTitle.setText(song.getTitle());
-        loadImage(song,holder);
+        //type = 2 => list các bài hát được theo dõi
+        else if (type == 2) {
+
+                artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        String name = snapshot.child("name").getValue(String.class);
+                        holder.txtArtist.setText(name);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+                holder.txtTitle.setText(song.getTitle());
+                loadImage(song,holder);
+            }
+
     }
 
-    private void loadImage(Song news, MyViewHolder holder) {
+    private void loadImage(Song song, MyViewHolder holder) {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
-        StorageReference pathReference = storageRef.child("song/" + news.getImage());
+        StorageReference pathReference = storageRef.child("song/" + song.getImage());
         pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -96,18 +117,25 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> 
 
     @Override
     public int getItemCount() {
-        return newArrayList.size();
+        return songArrayList.size();
     }
 
-    public static class MyViewHolder extends RecyclerView.ViewHolder {
+    public class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView imgSong;
-        TextView txtArtist, txtTitle;
-
+        TextView txtTitle, txtArtist;
+        ImageButton btnSong;
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             imgSong = itemView.findViewById(R.id.imgSong);
             txtArtist = itemView.findViewById(R.id.txtArtist);
             txtTitle = itemView.findViewById(R.id.txtTitle);
+            btnSong = itemView.findViewById(R.id.btnSong);
         }
+    }
+    public interface OnUserClickListener {
+        void onUserClick(Song song);
+    }
+    public void setOnUserClickListener(SongAdapter.OnUserClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 }

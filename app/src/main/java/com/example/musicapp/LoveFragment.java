@@ -95,6 +95,7 @@ public class LoveFragment extends Fragment {
             @Override
             public void onUserClick(Artist artist) {
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra("artistID",artist.getId());
                 startActivity(intent);
             }
         });
