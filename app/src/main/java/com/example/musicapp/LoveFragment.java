@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +18,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
@@ -85,7 +85,7 @@ public class LoveFragment extends Fragment {
         String userUid = getArguments().getString("userID");
         artistArrayList = new ArrayList<>();
         LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList, userUid);
-        dataInit(loveAdapter);
+        dataInit(loveAdapter, userUid);
         recyclerview = view.findViewById(R.id.rcvLove);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
@@ -95,23 +95,36 @@ public class LoveFragment extends Fragment {
             @Override
             public void onUserClick(Artist artist) {
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra("artistID",artist.getId());
+                intent.putExtra("artistID", artist.getId());
                 startActivity(intent);
             }
         });
     }
 
-    private void dataInit(LoveAdapter loveAdapter) {
+    private void dataInit(LoveAdapter loveAdapter, String userUid) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference artistdb = database.getReference("artist");
-        // Read from the database
+        DatabaseReference followDB = database.getReference("follow/" + userUid + "/artist");
         artistdb.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Artist artist = snapshot.getValue(Artist.class);
                 if (artist != null) {
-                    artistArrayList.add(artist);
-                    loveAdapter.notifyDataSetChanged();
+                    followDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.hasChild(String.valueOf(artist.getId()))) {
+                                artistArrayList.add(artist);
+                                loveAdapter.notifyDataSetChanged();
+                            }
+
+                        }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
                 }
 
             }

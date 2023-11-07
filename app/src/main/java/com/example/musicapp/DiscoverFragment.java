@@ -1,5 +1,6 @@
 package com.example.musicapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -88,6 +89,7 @@ public class DiscoverFragment extends Fragment {
         famousArrayList = new ArrayList<>();
         FamousAdapter famousAdapter = new FamousAdapter(getContext(), famousArrayList);
         dataInitFamous(famousAdapter, view);
+
         //Thêm list các bài hát mới
         newsArrayList = new ArrayList<>();
         NewsAdapter newsAdapter = new NewsAdapter(getContext(), newsArrayList);
@@ -179,6 +181,14 @@ public class DiscoverFragment extends Fragment {
         news.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         news.setAdapter(newsAdapter);
         news.setHasFixedSize(true);
+        newsAdapter.setOnUserClickListener(new NewsAdapter.OnUserClickListener() {
+            @Override
+            public void onUserClick(Song song) {
+                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                intent.putExtra("songID", song.getId());
+                startActivity(intent);
+            }
+        });
     }
 
     private void dataInitFamous(FamousAdapter famousAdapter, View view) {
@@ -220,6 +230,14 @@ public class DiscoverFragment extends Fragment {
         famous.setHasFixedSize(true);
         famous.setAdapter(famousAdapter);
         famous.setHasFixedSize(true);
+        famousAdapter.setOnUserClickListener(new FamousAdapter.OnUserClickListener() {
+            @Override
+            public void onUserClick(Song song) {
+                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                intent.putExtra("songID", song.getId());
+                startActivity(intent);
+            }
+        });
     }
 
     private void dataInitPopular(PopularAdapter popularAdapter, View view) {
@@ -232,6 +250,14 @@ public class DiscoverFragment extends Fragment {
                 Artist artist = snapshot.getValue(Artist.class);
                 if (artist != null) {
                     artistArrayList.add(0,artist);
+                    popularAdapter.setOnUserClickListener(new PopularAdapter.OnUserClickListener() {
+                        @Override
+                        public void onUserClick(Artist artist) {
+                            Intent intent = new Intent(getActivity(), DetailActivity.class);
+                            intent.putExtra("artistID", artist.getId());
+                            startActivity(intent);
+                        }
+                    });
                     popularAdapter.notifyDataSetChanged();
                 }
             }

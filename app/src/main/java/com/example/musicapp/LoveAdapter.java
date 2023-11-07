@@ -31,6 +31,7 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
     ArrayList<Artist> artistArrayList;
 
     private OnUserClickListener clickListener;
+
     public LoveAdapter(Context context, ArrayList<Artist> artistArrayList, String userId) {
         this.context = context;
         this.userId = userId;
@@ -46,38 +47,17 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference followDB = database.getReference("follow/" + userId + "/artist");
         Artist artist = artistArrayList.get(position);
-        if (artist == null){
+        if (artist == null) {
             return;
         }
-        followDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.hasChild(String.valueOf(artist.getId()))) {
-                        holder.txtArtist.setText(artist.getName());
-                        holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
-                        loadImage(artist, holder);
-                }
-                else {
-                    int artistIndex = artistArrayList.indexOf(artist);
-                    if (artistIndex != -1) {
-                        artistArrayList.remove(artistIndex);
-                        notifyItemRemoved(artistIndex);
-                    }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
-
+        holder.txtArtist.setText(artist.getName());
+        holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
+        loadImage(artist, holder);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(clickListener != null) clickListener.onUserClick(artist);
+                if (clickListener != null) clickListener.onUserClick(artist);
             }
         });
     }
@@ -119,9 +99,11 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
             txtNumsong = itemView.findViewById(R.id.txtNumsong);
         }
     }
+
     public interface OnUserClickListener {
         void onUserClick(Artist artist);
     }
+
     public void setOnUserClickListener(OnUserClickListener clickListener) {
         this.clickListener = clickListener;
     }
