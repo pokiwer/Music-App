@@ -19,7 +19,7 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="15dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_background" />
+                />
 
             <TextView
                 android:id="@+id/txtArtist"
@@ -27,7 +27,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:gravity="center"
-                android:text="Dj Wisteria"
+                android:text="Song"
                 android:textStyle="bold" />
 
             <TextView
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Let's go to Nevada" />
+                android:text="Artist" />
         </LinearLayout>
 
 </androidx.cardview.widget.CardView>

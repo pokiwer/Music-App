@@ -44,7 +44,8 @@
                 android:id="@+id/imgArtist"
                 android:layout_width="124dp"
                 android:layout_height="124dp"
-                android:src="@mipmap/ic_launcher" />
+                android:src="@mipmap/ic_launcher"
+                android:scaleType="centerCrop"/>
         </androidx.cardview.widget.CardView>
 
         <View

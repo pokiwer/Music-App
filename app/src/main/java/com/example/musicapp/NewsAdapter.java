@@ -28,6 +28,7 @@ import java.util.ArrayList;
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> {
     Context context;
     ArrayList<Song> newArrayList;
+    private NewsAdapter.OnUserClickListener clickListener;
 
     public NewsAdapter(Context context, ArrayList<Song> newArrayList) {
         this.context = context;
@@ -71,6 +72,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> 
         }
         holder.txtTitle.setText(song.getTitle());
         loadImage(song,holder);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (clickListener != null) clickListener.onUserClick(song);
+            }
+        });
     }
 
     private void loadImage(Song news, MyViewHolder holder) {
@@ -109,5 +116,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.MyViewHolder> 
             txtArtist = itemView.findViewById(R.id.txtArtist);
             txtTitle = itemView.findViewById(R.id.txtTitle);
         }
+    }
+    public interface OnUserClickListener {
+        void onUserClick(Song song);
+    }
+
+    public void setOnUserClickListener(NewsAdapter.OnUserClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 }

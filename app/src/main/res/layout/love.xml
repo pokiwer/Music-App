@@ -24,7 +24,6 @@
                 android:id="@+id/imgArtist"
                 android:layout_width="50dp"
                 android:layout_height="50dp"
-                android:src="@mipmap/ic_launcher"
                 android:scaleType="centerCrop"
                 />
         </androidx.cardview.widget.CardView>
@@ -40,7 +39,7 @@
                 android:id="@+id/txtArtist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Grand Rock"
+                android:text="Artist"
                 android:textSize="17dp"
                 android:textStyle="bold" />
 
@@ -48,7 +47,7 @@
                 android:id="@+id/txtNumsong"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="21 Songs" />
+                android:text="Number of song" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <ImageButton

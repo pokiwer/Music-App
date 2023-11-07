@@ -17,9 +17,9 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -85,23 +85,49 @@ public class AlbumFragment extends Fragment {
         String userUid = getArguments().getString("userID");
         songArrayList = new ArrayList<>();
         AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), userUid, songArrayList);
-        dataInit(albumAdapter);
+        dataInit(albumAdapter,userUid);
         recyclerview = view.findViewById(R.id.rcvAlbum);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
         recyclerview.setAdapter(albumAdapter);
     }
 
-    private void dataInit(AlbumAdapter albumAdapter) {
+    private void dataInit(AlbumAdapter albumAdapter, String userUid) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference myRef = database.getReference("song");
+        DatabaseReference albumDB = database.getReference("album/" + userUid + "/song");
+        DatabaseReference artistDB = database.getReference("artist");
         myRef.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song song = snapshot.getValue(Song.class);
                 if (song != null) {
-                    songArrayList.add(song);
-                    albumAdapter.notifyDataSetChanged();
+                    albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.hasChild(String.valueOf(song.getId())))
+                            {
+                                artistDB.child(String.valueOf(song.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                        songArrayList.add(song);
+                                        albumAdapter.notifyDataSetChanged();
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError error) {
+
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
                 }
             }
 

@@ -46,37 +46,16 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference albumDB = database.getReference("album/" + userId + "/song");
         DatabaseReference artistDB = database.getReference("artist");
         Song album = songArrayList.get(position);
         if (album == null) return;
-        albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
+        artistDB.child(String.valueOf(album.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.hasChild(String.valueOf(album.getId())))
-                {
-                    artistDB.child(String.valueOf(album.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            String artistName = snapshot.child("name").getValue(String.class);
-                            holder.txtArtist.setText(String.valueOf(artistName));
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
-                    loadImage(album,holder);
-                    holder.txtTitle.setText(album.getTitle());
-                }
-                else {
-                    int albumIndex = songArrayList.indexOf(album);
-                    if (albumIndex != -1) {
-                        songArrayList.remove(albumIndex);
-                        notifyItemRemoved(albumIndex);
-                    }
-                }
+                String artistName = snapshot.child("name").getValue(String.class);
+                holder.txtArtist.setText(String.valueOf(artistName));
+                loadImage(album, holder);
+                holder.txtTitle.setText(album.getTitle());
             }
 
             @Override
@@ -84,7 +63,6 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
 
             }
         });
-
     }
 
     private void loadImage(Song album, MyViewHolder holder) {
