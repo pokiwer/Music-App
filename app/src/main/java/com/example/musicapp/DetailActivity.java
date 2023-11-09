@@ -62,7 +62,6 @@ public class DetailActivity extends AppCompatActivity {
                 pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        Log.d("TAG", "onSuccess: " + uri.toString());
                         Glide.with(DetailActivity.this).load(uri.toString()).into(imgArtist);
                     }
                 });
@@ -113,6 +112,15 @@ public class DetailActivity extends AppCompatActivity {
         recyclerview.setLayoutManager(new LinearLayoutManager(this));
         recyclerview.setAdapter(songAdapter);
         recyclerview.setHasFixedSize(true);
+        songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
+            @Override
+            public void onUserClick(Song song) {
+                Intent intent = new Intent(DetailActivity.this, PlayerActivity.class);
+                intent.putExtra("song", song);
+                intent.putExtra("songList",songArrayList);
+                startActivity(intent);
+            }
+        });
 
     }
 

@@ -33,6 +33,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
     ArrayList<Song> songArrayList;
     int type;
     private SongAdapter.OnUserClickListener clickListener;
+
     public SongAdapter(Context context, ArrayList<Song> songArrayList, int type) {
         this.context = context;
         this.songArrayList = songArrayList;
@@ -51,46 +52,53 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
         Song song = songArrayList.get(position);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference artistDB = database.getReference("artist/" + song.getArtist());
-        if (song == null){
+        if (song == null) {
             return;
         }
         //type = 1 => list tổng hợp tất cả bài hát
-        if (type == 1){
+        if (type == 1) {
             artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
-                    if (snapshot.exists())
-                    {
+                    if (snapshot.exists()) {
                         String artistName = snapshot.child("name").getValue(String.class);
                         holder.txtArtist.setText(artistName);
                     }
                 }
+
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
 
                 }
             });
             holder.txtTitle.setText(song.getTitle());
-            loadImage(song,holder);
+            loadImage(song, holder);
         }
         //type = 2 => list các bài hát được theo dõi
         else if (type == 2) {
 
-                artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String name = snapshot.child("name").getValue(String.class);
-                        holder.txtArtist.setText(name);
-                    }
+            artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String name = snapshot.child("name").getValue(String.class);
+                    holder.txtArtist.setText(name);
+                }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
 
-                    }
-                });
-                holder.txtTitle.setText(song.getTitle());
-                loadImage(song,holder);
+                }
+            });
+            holder.txtTitle.setText(song.getTitle());
+            loadImage(song, holder);
+
+        }
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (clickListener != null) clickListener.onUserClick(song);
             }
+        });
 
     }
 
@@ -124,6 +132,7 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
         ImageView imgSong;
         TextView txtTitle, txtArtist;
         ImageButton btnSong;
+
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
             imgSong = itemView.findViewById(R.id.imgSong);
@@ -132,9 +141,11 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
             btnSong = itemView.findViewById(R.id.btnSong);
         }
     }
+
     public interface OnUserClickListener {
         void onUserClick(Song song);
     }
+
     public void setOnUserClickListener(SongAdapter.OnUserClickListener clickListener) {
         this.clickListener = clickListener;
     }
