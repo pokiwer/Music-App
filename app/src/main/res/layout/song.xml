@@ -23,7 +23,8 @@
                 android:id="@+id/imgSong"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
-                android:src="@mipmap/ic_launcher_round" />
+                android:scaleType="centerCrop"
+                 />
         </androidx.cardview.widget.CardView>
 
         <androidx.appcompat.widget.LinearLayoutCompat

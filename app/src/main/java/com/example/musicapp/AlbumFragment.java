@@ -1,5 +1,6 @@
 package com.example.musicapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -90,6 +91,15 @@ public class AlbumFragment extends Fragment {
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
         recyclerview.setAdapter(albumAdapter);
+        albumAdapter.setOnUserClickListener(new AlbumAdapter.OnUserClickListener() {
+            @Override
+            public void onUserClick(Song song) {
+                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                intent.putExtra("song", song);
+                intent.putExtra("songList",songArrayList);
+                startActivity(intent);
+            }
+        });
     }
 
     private void dataInit(AlbumAdapter albumAdapter, String userUid) {

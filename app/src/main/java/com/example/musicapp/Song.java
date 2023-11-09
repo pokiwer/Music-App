@@ -1,6 +1,8 @@
 package com.example.musicapp;
 
-public class Song {
+import java.io.Serializable;
+
+public class Song implements Serializable {
     private int id, numListen, artist;
     private String name, title,image;
 
@@ -62,5 +64,17 @@ public class Song {
 
     public void setImage(String image) {
         this.image = image;
+    }
+
+    @Override
+    public String toString() {
+        return "Song{" +
+                "id=" + id +
+                ", numListen=" + numListen +
+                ", artist=" + artist +
+                ", name='" + name + '\'' +
+                ", title='" + title + '\'' +
+                ", image='" + image + '\'' +
+                '}';
     }
 }

@@ -8,9 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -141,6 +138,15 @@ public class DiscoverFragment extends Fragment {
         song.setLayoutManager(new LinearLayoutManager(getContext()));
         song.setAdapter(songAdapter);
         song.setHasFixedSize(true);
+        songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
+            @Override
+            public void onUserClick(Song song) {
+                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                intent.putExtra("song", song);
+                intent.putExtra("songList",songArrayList);
+                startActivity(intent);
+            }
+        });
     }
 
     private void dataInitNews(NewsAdapter newsAdapter, View view) {
@@ -185,7 +191,8 @@ public class DiscoverFragment extends Fragment {
             @Override
             public void onUserClick(Song song) {
                 Intent intent = new Intent(getActivity(), PlayerActivity.class);
-                intent.putExtra("songID", song.getId());
+                intent.putExtra("song", song);
+                intent.putExtra("songList",newsArrayList);
                 startActivity(intent);
             }
         });
@@ -234,7 +241,8 @@ public class DiscoverFragment extends Fragment {
             @Override
             public void onUserClick(Song song) {
                 Intent intent = new Intent(getActivity(), PlayerActivity.class);
-                intent.putExtra("songID", song.getId());
+                intent.putExtra("song", song);
+                intent.putExtra("songList",famousArrayList);
                 startActivity(intent);
             }
         });

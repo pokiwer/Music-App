@@ -29,6 +29,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
     Context context;
     String userId;
     ArrayList<Song> songArrayList;
+    private OnUserClickListener clickListener;
 
     public AlbumAdapter(Context context, String userId, ArrayList<Song> songArrayList) {
         this.context = context;
@@ -56,6 +57,12 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
                 holder.txtArtist.setText(String.valueOf(artistName));
                 loadImage(album, holder);
                 holder.txtTitle.setText(album.getTitle());
+                holder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (clickListener != null) clickListener.onUserClick(album);
+                    }
+                });
             }
 
             @Override
@@ -101,5 +108,13 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
             txtArtist = itemView.findViewById(R.id.txtArtist);
             txtTitle = itemView.findViewById(R.id.txtTitle);
         }
+    }
+
+    public interface OnUserClickListener {
+        void onUserClick(Song song);
+    }
+
+    public void setOnUserClickListener(AlbumAdapter.OnUserClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 }
