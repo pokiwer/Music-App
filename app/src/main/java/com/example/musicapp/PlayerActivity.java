@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,6 +25,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,9 +51,6 @@ public class PlayerActivity extends AppCompatActivity {
         song = (Song) intent.getSerializableExtra("song");
         songArrayList = (ArrayList<Song>) intent.getSerializableExtra("songList");
         index = findSongIndex(songArrayList, song);
-        for (int i = 0; i < songArrayList.size(); i++) {
-            Song song = songArrayList.get(i);
-        }
         Mapping();
         showInfor();
         eventClick();
@@ -99,9 +96,14 @@ public class PlayerActivity extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                btnPlay.performClick();
                 if (index == songArrayList.size() - 1) {
                     index = 0;
                 } else index++;
+                if (mediaPlayer != null) {
+                    mediaPlayer.release();
+                    mediaPlayer = null;
+                }
                 showInfor();
             }
         });
@@ -109,9 +111,14 @@ public class PlayerActivity extends AppCompatActivity {
         btnPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                btnPlay.performClick();
                 if (index == 0) {
                     index = songArrayList.size() - 1;
                 } else index--;
+                if (mediaPlayer != null) {
+                    mediaPlayer.release();
+                    mediaPlayer = null;
+                }
                 showInfor();
             }
         });
@@ -163,56 +170,70 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void loadAudio(String name, StorageReference audioUrl) {
-        
-        mediaPlayer = MediaPlayer.create(PlayerActivity.this, R.raw.dragonvslatch);
-        mediaPlayer.seekTo(0);
-        String duration = duration2String(mediaPlayer.getDuration());
-        txtDuration.setText(duration);
-        //Xử lí seekbar
-        seekbar.setMax(mediaPlayer.getDuration());
-        seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
-                if (isFromUser) {
-                    mediaPlayer.seekTo(process);
-                    seekbar.setProgress(process);
-                }
-            }
+        mediaPlayer = new MediaPlayer();
+         audioUrl.child(name).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+             @Override
+             public void onSuccess(Uri uri) {
+                 try {
+                     mediaPlayer.setDataSource(uri.toString());
+                     mediaPlayer.prepare();
+                     mediaPlayer.seekTo(0);
+                     seekbar.setProgress(0);
+                     txtTime.setText("0:00");
+                     btnPlay.performClick();
+                     String duration = duration2String(mediaPlayer.getDuration());
+                     txtDuration.setText(duration);
+                     //Xử lí seekbar
+                     seekbar.setMax(mediaPlayer.getDuration());
+                     seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                         @Override
+                         public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
+                             if (isFromUser) {
+                                 mediaPlayer.seekTo(process);
+                                 seekbar.setProgress(process);
+                             }
+                         }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
+                         @Override
+                         public void onStartTrackingTouch(SeekBar seekBar) {
 
-            }
+                         }
 
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
+                         @Override
+                         public void onStopTrackingTouch(SeekBar seekBar) {
 
-            }
-        });
-        //Xử lí cập nhật seekbar theo thời gian
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (mediaPlayer != null) {
-                    if (mediaPlayer.isPlaying()) {
-                        try {
-                            final double current = mediaPlayer.getCurrentPosition();
-                            final String currentTime = duration2String((int) current);
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    txtTime.setText(currentTime);
-                                    seekbar.setProgress((int) current);
-                                }
-                            });
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
+                         }
+                     });
+                     //Xử lí cập nhật seekbar theo thời gian
+                     new Thread(new Runnable() {
+                         @Override
+                         public void run() {
+                             while (mediaPlayer != null) {
+                                 if (mediaPlayer.isPlaying()) {
+                                     try {
+                                         final double current = mediaPlayer.getCurrentPosition();
+                                         final String currentTime = duration2String((int) current);
+                                         runOnUiThread(new Runnable() {
+                                             @Override
+                                             public void run() {
+                                                 txtTime.setText(currentTime);
+                                                 seekbar.setProgress((int) current);
+                                             }
+                                         });
+                                         Thread.sleep(1000);
+                                     } catch (InterruptedException e) {
 
-                        }
-                    }
-                }
-            }
-        }).start();
+                                     }
+                                 }
+                             }
+                         }
+                     }).start();
+                 } catch (IOException e) {
+                     throw new RuntimeException(e);
+                 }
+             }
+         });
+
     }
 
     //Ánh xạ id
