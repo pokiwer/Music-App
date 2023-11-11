@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,21 +28,20 @@ import com.google.firebase.storage.StorageTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class PlayerActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
     ImageView imgSong, btnExit;
     TextView txtSong, txtArtist, txtTime, txtDuration;
     SeekBar seekbar;
-    ImageButton btnPrev, btnPlay, btnNext;
+    ImageButton btnPrev, btnPlay, btnNext, btnRepeat, btnAddMusic;
     private File fileLocal;
-    private int index;
+    private int index, buttonState = 0;
     private Song song;
     private ArrayList<Song> songArrayList;
     private FirebaseDatabase database;
     private FirebaseStorage storage;
-    private StorageTask downloadTask;
+    private Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +55,30 @@ public class PlayerActivity extends AppCompatActivity {
         showInfor();
         eventClick();
     }
+
+    //Xử lí lặp bài hát
+    private void handleRepeat() {
+        if (mediaPlayer != null) {
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    // Xử lý theo trạng thái nút repeat
+                    switch (buttonState) {
+                        case 0:
+                            btnNext.performClick();
+                            break;
+                        case 1:
+                            mediaPlayer.start();
+                            break;
+                        case 2:
+                            mediaPlayer.stop();
+                            break;
+                    }
+                }
+            });
+        }
+    }
+
 
     //Tìm index của bài hát
     private int findSongIndex(ArrayList<Song> songArrayList, Song current) {
@@ -80,14 +104,54 @@ public class PlayerActivity extends AppCompatActivity {
         return ellapsedTime;
     }
 
+    private Runnable updateSeekBarAndTime = new Runnable() {
+        @Override
+        public void run() {
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                int currentPosition = mediaPlayer.getCurrentPosition();
+                String currentTime = duration2String(currentPosition);
+                // Cập nhật giao diện người dùng trên UI Thread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txtTime.setText(currentTime);
+                        seekbar.setProgress(currentPosition);
+                    }
+                });
+            }
+
+            // Lập lịch chạy lại Runnable sau 1000ms (1 giây)
+            handler.postDelayed(this, 1000);
+        }
+    };
+
+    private void startUpdatingSeekBarAndTime() {
+        handler.postDelayed(updateSeekBarAndTime, 1000);
+    }
+
+    // Bổ sung phương thức này để dừng việc cập nhật seekbar và thời gian
+    private void stopUpdatingSeekBarAndTime() {
+        handler.removeCallbacks(updateSeekBarAndTime);
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        stopUpdatingSeekBarAndTime();
+
+        if (mediaPlayer != null) {
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+    }
+
     private void eventClick() {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mediaPlayer.isPlaying()) {
+                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                     mediaPlayer.pause();
                     btnPlay.setImageResource(R.drawable.ic_play);
-                } else {
+                } else if (mediaPlayer != null) {
                     mediaPlayer.start();
                     btnPlay.setImageResource(R.drawable.ic_pause);
                 }
@@ -96,14 +160,16 @@ public class PlayerActivity extends AppCompatActivity {
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                btnPlay.performClick();
-                if (index == songArrayList.size() - 1) {
-                    index = 0;
-                } else index++;
                 if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.pause();
+                    }
                     mediaPlayer.release();
                     mediaPlayer = null;
                 }
+                if (index == songArrayList.size() - 1) {
+                    index = 0;
+                } else index++;
                 showInfor();
             }
         });
@@ -111,15 +177,40 @@ public class PlayerActivity extends AppCompatActivity {
         btnPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                btnPlay.performClick();
-                if (index == 0) {
-                    index = songArrayList.size() - 1;
-                } else index--;
                 if (mediaPlayer != null) {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.pause();
+                    }
                     mediaPlayer.release();
                     mediaPlayer = null;
                 }
+                if (index == 0) {
+                    index = songArrayList.size() - 1;
+                } else index--;
                 showInfor();
+            }
+        });
+        btnRepeat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (buttonState) {
+                    case 0:
+                        buttonState = 1;
+                        btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                        btnRepeat.setAlpha(1f);
+                        break;
+                    case 1:
+                        buttonState = 2;
+                        btnRepeat.setAlpha(0.5f);
+                        btnRepeat.setImageResource(R.drawable.ic_repeat);
+                        break;
+                    case 2:
+                        buttonState = 0;
+                        btnRepeat.setImageResource(R.drawable.ic_repeat);
+                        btnRepeat.setAlpha(1f);
+                        break;
+                }
+                handleRepeat();
             }
         });
     }
@@ -159,7 +250,6 @@ public class PlayerActivity extends AppCompatActivity {
                 });
                 //Load mp3
                 loadAudio(current.getName(), audioUrl);
-
             }
 
             @Override
@@ -171,69 +261,55 @@ public class PlayerActivity extends AppCompatActivity {
 
     private void loadAudio(String name, StorageReference audioUrl) {
         mediaPlayer = new MediaPlayer();
-         audioUrl.child(name).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-             @Override
-             public void onSuccess(Uri uri) {
-                 try {
-                     mediaPlayer.setDataSource(uri.toString());
-                     mediaPlayer.prepare();
-                     mediaPlayer.seekTo(0);
-                     seekbar.setProgress(0);
-                     txtTime.setText("0:00");
-                     btnPlay.performClick();
-                     String duration = duration2String(mediaPlayer.getDuration());
-                     txtDuration.setText(duration);
-                     //Xử lí seekbar
-                     seekbar.setMax(mediaPlayer.getDuration());
-                     seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                         @Override
-                         public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
-                             if (isFromUser) {
-                                 mediaPlayer.seekTo(process);
-                                 seekbar.setProgress(process);
-                             }
-                         }
+        audioUrl.child(name).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                try {
+                    mediaPlayer.setDataSource(uri.toString());
+                    mediaPlayer.prepare();
+                    mediaPlayer.seekTo(0);
+                    seekbar.setProgress(0);
+                    txtTime.setText("0:00");
+                    mediaPlayer.start();
+                    btnPlay.setImageResource(R.drawable.ic_pause);
+                    String duration = duration2String(mediaPlayer.getDuration());
+                    txtDuration.setText(duration);
+                    handleRepeat();
+                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                        @Override
+                        public void onCompletion(MediaPlayer mediaPlayer) {
+                            btnPlay.setImageResource(R.drawable.ic_play);
+                        }
+                    });
+                    //Xử lí seekbar
+                    seekbar.setMax(mediaPlayer.getDuration());
+                    // Bắt đầu cập nhật seekbar và thời gian
+                    startUpdatingSeekBarAndTime();
+                    seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                        @Override
+                        public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
+                            if (isFromUser) {
+                                mediaPlayer.seekTo(process);
+                                seekbar.setProgress(process);
+                            }
+                        }
 
-                         @Override
-                         public void onStartTrackingTouch(SeekBar seekBar) {
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) {
 
-                         }
+                        }
 
-                         @Override
-                         public void onStopTrackingTouch(SeekBar seekBar) {
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) {
 
-                         }
-                     });
-                     //Xử lí cập nhật seekbar theo thời gian
-                     new Thread(new Runnable() {
-                         @Override
-                         public void run() {
-                             while (mediaPlayer != null) {
-                                 if (mediaPlayer.isPlaying()) {
-                                     try {
-                                         final double current = mediaPlayer.getCurrentPosition();
-                                         final String currentTime = duration2String((int) current);
-                                         runOnUiThread(new Runnable() {
-                                             @Override
-                                             public void run() {
-                                                 txtTime.setText(currentTime);
-                                                 seekbar.setProgress((int) current);
-                                             }
-                                         });
-                                         Thread.sleep(1000);
-                                     } catch (InterruptedException e) {
+                        }
+                    });
 
-                                     }
-                                 }
-                             }
-                         }
-                     }).start();
-                 } catch (IOException e) {
-                     throw new RuntimeException(e);
-                 }
-             }
-         });
-
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     //Ánh xạ id
@@ -248,5 +324,7 @@ public class PlayerActivity extends AppCompatActivity {
         btnPrev = findViewById(R.id.btnPrev);
         btnPlay = findViewById(R.id.btnPlay);
         btnNext = findViewById(R.id.btnNext);
+        btnRepeat = findViewById(R.id.btnRepeat);
+        btnAddMusic = findViewById(R.id.btnAddMusic);
     }
 }
