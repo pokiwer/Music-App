@@ -2,12 +2,24 @@ package com.example.musicapp;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
+import android.media.browse.MediaBrowser;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,7 +39,9 @@ import com.google.firebase.storage.StorageTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class PlayerActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
@@ -35,7 +49,7 @@ public class PlayerActivity extends AppCompatActivity {
     TextView txtSong, txtArtist, txtTime, txtDuration;
     SeekBar seekbar;
     ImageButton btnPrev, btnPlay, btnNext, btnRepeat, btnAddMusic;
-    private File fileLocal;
+    private Bitmap bitmap;
     private int index, buttonState = 0;
     private Song song;
     private ArrayList<Song> songArrayList;
@@ -71,6 +85,7 @@ public class PlayerActivity extends AppCompatActivity {
                             mediaPlayer.start();
                             break;
                         case 2:
+                            btnPlay.setImageResource(R.drawable.ic_play);
                             mediaPlayer.stop();
                             break;
                     }
@@ -246,6 +261,17 @@ public class PlayerActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(Uri uri) {
                         Glide.with(PlayerActivity.this).load(uri.toString()).into(imgSong);
+                        try {
+                            InputStream inputStream = getContentResolver().openInputStream(uri);
+                            bitmap = BitmapFactory.decodeStream(inputStream);
+                            imgSong.setImageBitmap(bitmap);
+                            if (inputStream != null) {
+                                inputStream.close();
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            // Xử lý ngoại lệ nếu có lỗi xảy ra trong quá trình chuyển đổi
+                        }
                     }
                 });
                 //Load mp3
@@ -274,13 +300,6 @@ public class PlayerActivity extends AppCompatActivity {
                     btnPlay.setImageResource(R.drawable.ic_pause);
                     String duration = duration2String(mediaPlayer.getDuration());
                     txtDuration.setText(duration);
-                    handleRepeat();
-                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                        @Override
-                        public void onCompletion(MediaPlayer mediaPlayer) {
-                            btnPlay.setImageResource(R.drawable.ic_play);
-                        }
-                    });
                     //Xử lí seekbar
                     seekbar.setMax(mediaPlayer.getDuration());
                     // Bắt đầu cập nhật seekbar và thời gian
@@ -308,9 +327,47 @@ public class PlayerActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+                //Xử lí lặp
+                handleRepeat();
+                //Gửi notification
+                sendNotification();
             }
         });
     }
+
+    private void sendNotification() {
+        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "media session");
+        Notification notification = new NotificationCompat.Builder(this, MusicChanel.CHANNEL_ID)
+                // Show controls on lock screen even when user hides sensitive content.
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setSmallIcon(R.drawable.ic_music)
+                .setColor(ContextCompat.getColor(this, R.color.white))
+                .setLargeIcon(bitmap)
+                // Add media control buttons that invoke intents in your media service
+                .addAction(R.drawable.ic_play_prev, "Previous", null) // #0
+                .addAction(R.drawable.ic_pause, "Pause", null)  // #1
+                .addAction(R.drawable.ic_play_next, "Next", null)     // #2
+                // Apply the media style template.
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
+                        .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
+                        .setMediaSession(mediaSessionCompat.getSessionToken()))
+                .setContentTitle(txtSong.getText())
+                .setContentText(txtArtist.getText())
+                .build();
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        notificationManager.notify(songArrayList.get(index).getId(), notification);
+    }
+
 
     //Ánh xạ id
     private void Mapping() {
