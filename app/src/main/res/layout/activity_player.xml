@@ -10,9 +10,10 @@
         android:layout_width="386dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="48dp">
+        android:layout_marginTop="40dp">
 
         <ImageView
+            android:id="@+id/btnExit"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:src="@drawable/ic_cross" />
@@ -26,10 +27,10 @@
         app:cardCornerRadius="14dp">
 
         <ImageView
+            android:id="@+id/imgSong"
             android:layout_width="386dp"
             android:layout_height="440dp"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_launcher_background" />
+            android:scaleType="centerCrop" />
 
     </androidx.cardview.widget.CardView>
 
@@ -45,42 +46,116 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/txtSong"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="Your Scent Is Here Now"
+                android:text="Song"
                 android:textSize="20dp"
-                android:textStyle="bold"></TextView>
+                android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/txtArtist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="Chris Brown"
-                android:textSize="15dp"></TextView>
+                android:text="Artist"
+                android:textSize="15dp" />
+
+            <SeekBar
+                android:id="@+id/seekbar"
+                android:layout_width="match_parent"
+                android:layout_height="10dp"
+                android:layout_marginTop="20dp"
+                android:progress="0" />
 
             <androidx.appcompat.widget.LinearLayoutCompat
-                android:layout_width="232dp"
-                android:layout_height="60dp"
-                android:layout_gravity="center_horizontal">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
+
+                <TextView
+                    android:id="@+id/txtTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="00:00" />
+
+                <TextView
+                    android:id="@+id/txtDuration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:text="00:00" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="20dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
 
                 <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:src="@drawable/ic_play_prev"
-                    />
-                <ImageButton
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:src="@drawable/ic_play"/>
+                    android:id="@+id/btnRepeat"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/custom_btn"
+                    android:src="@drawable/ic_repeat" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
 
                 <ImageButton
+                    android:id="@+id/btnPrev"
                     android:layout_width="60dp"
                     android:layout_height="60dp"
-                    android:layout_weight="1"
-                    android:src="@drawable/ic_play_next"/>
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/custom_btn"
+                    android:src="@drawable/ic_play_prev" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnPlay"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:background="@drawable/custom_btn"
+                    android:src="@drawable/ic_play" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/custom_btn"
+                    android:src="@drawable/ic_play_next"
+                    app:backgroundTint="@null" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnAddMusic"
+                    android:layout_width="35dp"
+                    android:layout_height="35dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_add_music" />
+
+
             </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.appcompat.widget.LinearLayoutCompat>
     </androidx.cardview.widget.CardView>
