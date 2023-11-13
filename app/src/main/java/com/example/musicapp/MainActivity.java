@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -25,6 +27,16 @@ public class MainActivity extends AppCompatActivity {
         Mapping();
         BtnControl();
         updateButtonState(btnDiscover,"Discover");
+        String userUid = getIntent().getStringExtra("userID");
+        Bundle bundle = new Bundle();
+        bundle.putString("userID", userUid);
+        userFragment.setArguments(bundle);
+        loveFragment.setArguments(bundle);
+        albumFragment.setArguments(bundle);
+        SharedPreferences sharedPreferences = getSharedPreferences("account", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("uid",userUid);
+        editor.apply();
     }
 
     private void Mapping()
