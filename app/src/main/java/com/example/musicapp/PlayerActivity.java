@@ -1,6 +1,7 @@
 package com.example.musicapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
@@ -14,12 +15,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.media.browse.MediaBrowser;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,7 +31,12 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -49,9 +58,10 @@ public class PlayerActivity extends AppCompatActivity {
     TextView txtSong, txtArtist, txtTime, txtDuration;
     SeekBar seekbar;
     ImageButton btnPrev, btnPlay, btnNext, btnRepeat, btnAddMusic;
-    private Bitmap bitmap;
     private int index, buttonState = 0;
     private Song song;
+    private Bitmap bitmap;
+    private boolean isAdded;
     private ArrayList<Song> songArrayList;
     private FirebaseDatabase database;
     private FirebaseStorage storage;
@@ -67,7 +77,6 @@ public class PlayerActivity extends AppCompatActivity {
         index = findSongIndex(songArrayList, song);
         Mapping();
         showInfor();
-        eventClick();
     }
 
     //Xử lí lặp bài hát
@@ -86,7 +95,7 @@ public class PlayerActivity extends AppCompatActivity {
                             break;
                         case 2:
                             btnPlay.setImageResource(R.drawable.ic_play);
-                            mediaPlayer.stop();
+                            mediaPlayer.pause();
                             break;
                     }
                 }
@@ -233,9 +242,12 @@ public class PlayerActivity extends AppCompatActivity {
     //Hiển thị thông tin bài hát
     private void showInfor() {
         Song current = songArrayList.get(index);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userUID = user.getUid();
         database = FirebaseDatabase.getInstance();
         DatabaseReference songDB = database.getReference("song/" + current.getId());
         DatabaseReference artistDB = database.getReference("artist");
+        DatabaseReference albumDB = database.getReference("album/" + userUID + "/song");
         storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference audioUrl = storageRef.child("song");
@@ -260,22 +272,46 @@ public class PlayerActivity extends AppCompatActivity {
                 audioUrl.child(current.getImage()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        Glide.with(PlayerActivity.this).load(uri.toString()).into(imgSong);
-                        try {
-                            InputStream inputStream = getContentResolver().openInputStream(uri);
-                            bitmap = BitmapFactory.decodeStream(inputStream);
-                            imgSong.setImageBitmap(bitmap);
-                            if (inputStream != null) {
-                                inputStream.close();
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            // Xử lý ngoại lệ nếu có lỗi xảy ra trong quá trình chuyển đổi
-                        }
+                        Glide.with(PlayerActivity.this)
+                                .asBitmap()
+                                .load(uri.toString())
+                                .into(new CustomTarget<Bitmap>() {
+                                    @Override
+                                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                        int desiredWidth = 64;
+                                        int desiredHeight = 64;
+                                        bitmap = Bitmap.createScaledBitmap(resource, desiredWidth, desiredHeight, false);
+                                        imgSong.setImageBitmap(resource);
+                                    }
+
+                                    @Override
+                                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                                        // Xử lý khi tải ảnh bị xóa
+                                    }
+                                });
                     }
                 });
                 //Load mp3
                 loadAudio(current.getName(), audioUrl);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+        albumDB.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.hasChild(String.valueOf(current.getId()))){
+                    isAdded = true;
+                    btnAddMusic.setImageResource(R.drawable.ic_added_music);
+                }
+                else {
+                    isAdded = false;
+                    btnAddMusic.setImageResource(R.drawable.ic_add_music);
+                }
+                eventClick();
             }
 
             @Override
@@ -341,7 +377,6 @@ public class PlayerActivity extends AppCompatActivity {
                 // Show controls on lock screen even when user hides sensitive content.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setSmallIcon(R.drawable.ic_music)
-                .setColor(ContextCompat.getColor(this, R.color.white))
                 .setLargeIcon(bitmap)
                 // Add media control buttons that invoke intents in your media service
                 .addAction(R.drawable.ic_play_prev, "Previous", null) // #0
@@ -356,19 +391,10 @@ public class PlayerActivity extends AppCompatActivity {
                 .build();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         notificationManager.notify(songArrayList.get(index).getId(), notification);
     }
-
-
     //Ánh xạ id
     private void Mapping() {
         btnExit = findViewById(R.id.btnExit);

@@ -1,6 +1,8 @@
 package com.example.musicapp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -8,6 +10,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,7 +90,6 @@ public class DiscoverFragment extends Fragment {
         famousArrayList = new ArrayList<>();
         FamousAdapter famousAdapter = new FamousAdapter(getContext(), famousArrayList);
         dataInitFamous(famousAdapter, view);
-
         //Thêm list các bài hát mới
         newsArrayList = new ArrayList<>();
         NewsAdapter newsAdapter = new NewsAdapter(getContext(), newsArrayList);
@@ -100,7 +103,6 @@ public class DiscoverFragment extends Fragment {
         SongAdapter songAdapter = new SongAdapter(getContext(),songArrayList,1);
         dataInitSong(songAdapter,view);
     }
-
     private void dataInitSong(SongAdapter songAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference songDB = database.getReference("song");
@@ -151,13 +153,13 @@ public class DiscoverFragment extends Fragment {
 
     private void dataInitNews(NewsAdapter newsAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference songdb = database.getReference("song");
-        Query query = songdb.orderByChild("id");
+        DatabaseReference songDB = database.getReference("song");
+        Query query = songDB.orderByChild("id");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song news = snapshot.getValue(Song.class);
-                if (news != null) {
+                if (news != null ) {
                     newsArrayList.add(0,news);
                     newsAdapter.notifyDataSetChanged();
                 }
@@ -200,8 +202,8 @@ public class DiscoverFragment extends Fragment {
 
     private void dataInitFamous(FamousAdapter famousAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference songdb = database.getReference("song");
-        Query query = songdb.orderByChild("numListen");
+        DatabaseReference songDB = database.getReference("song");
+        Query query = songDB.orderByChild("numListen");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
@@ -250,8 +252,8 @@ public class DiscoverFragment extends Fragment {
 
     private void dataInitPopular(PopularAdapter popularAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference artistdb = database.getReference("artist");
-        Query query = artistdb.orderByChild("numFollow");
+        DatabaseReference artistDB = database.getReference("artist");
+        Query query = artistDB.orderByChild("numFollow");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
@@ -263,6 +265,7 @@ public class DiscoverFragment extends Fragment {
                         public void onUserClick(Artist artist) {
                             Intent intent = new Intent(getActivity(), DetailActivity.class);
                             intent.putExtra("artistID", artist.getId());
+//                            intent.putExtra("userID",userUid);
                             startActivity(intent);
                         }
                     });
