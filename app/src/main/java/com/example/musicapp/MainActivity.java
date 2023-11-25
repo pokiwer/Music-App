@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navigationView;
 
     private Fragment discoverFragment, albumFragment, loveFragment, userFragment;
-    private ImageButton selectedButton;
+
 
 
     @Override
@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity {
         String userUid = getIntent().getStringExtra("userID");
         Bundle bundle = new Bundle();
         bundle.putString("userID", userUid);
-        discoverFragment.setArguments(bundle);
         userFragment.setArguments(bundle);
         loveFragment.setArguments(bundle);
         albumFragment.setArguments(bundle);

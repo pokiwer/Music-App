@@ -13,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -83,10 +85,11 @@ public class AlbumFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        String userUid = getArguments().getString("userID");
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userUid = user.getUid();
         songArrayList = new ArrayList<>();
         AlbumAdapter albumAdapter = new AlbumAdapter(getContext(), userUid, songArrayList);
-        dataInit(albumAdapter,userUid);
+        dataInit(albumAdapter, userUid);
         recyclerview = view.findViewById(R.id.rcvAlbum);
         recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerview.setHasFixedSize(true);
@@ -94,20 +97,22 @@ public class AlbumFragment extends Fragment {
         albumAdapter.setOnUserClickListener(new AlbumAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                Intent intent = new Intent(getActivity(), PlayerService.class);
                 intent.putExtra("song", song);
-                intent.putExtra("songList",songArrayList);
-                startActivity(intent);
+                intent.putExtra("songList", songArrayList);
+                intent.putExtra("isOpen",true);
+                getActivity().startService(intent);
+
             }
         });
     }
 
     private void dataInit(AlbumAdapter albumAdapter, String userUid) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("song");
+        DatabaseReference songDB = database.getReference("song");
         DatabaseReference albumDB = database.getReference("album/" + userUid + "/song");
         DatabaseReference artistDB = database.getReference("artist");
-        myRef.addChildEventListener(new ChildEventListener() {
+        songDB.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song song = snapshot.getValue(Song.class);
@@ -115,8 +120,7 @@ public class AlbumFragment extends Fragment {
                     albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.hasChild(String.valueOf(song.getId())))
-                            {
+                            if (snapshot.hasChild(String.valueOf(song.getId()))) {
                                 artistDB.child(String.valueOf(song.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(@NonNull DataSnapshot snapshot) {

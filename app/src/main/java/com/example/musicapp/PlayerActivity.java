@@ -3,38 +3,21 @@ package com.example.musicapp;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import android.app.Notification;
-import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
-import android.media.browse.MediaBrowser;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.MediaStore;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.google.android.gms.tasks.OnSuccessListener;
+import android.widget.Toast;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -42,78 +25,83 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.StorageTask;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Date;
 
 public class PlayerActivity extends AppCompatActivity {
-    private MediaPlayer mediaPlayer;
+
     ImageView imgSong, btnExit;
     TextView txtSong, txtArtist, txtTime, txtDuration;
     SeekBar seekbar;
     ImageButton btnPrev, btnPlay, btnNext, btnRepeat, btnAddMusic;
-    private int index, buttonState = 0;
+    private int buttonState = 0, mediaDuration, position, rewind;
     private Song song;
     private Bitmap bitmap;
-    private boolean isAdded;
-    private ArrayList<Song> songArrayList;
+    private String artistName;
+    private boolean isAdded, isPlaying;
     private FirebaseDatabase database;
-    private FirebaseStorage storage;
     private Handler handler = new Handler();
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle bundle = intent.getExtras();
+            if (bundle == null) return;
+            song = (Song) bundle.get("song");
+            int action = bundle.getInt("action");
+            artistName = bundle.getString("artist");
+            bitmap = bundle.getParcelable("bitmap");
+            mediaDuration = bundle.getInt("duration", 0);
+            position = bundle.getInt("position", 0);
+            isPlaying = bundle.getBoolean("isPlaying");
+            handleAction(action);
+            showInfor();
+        }
+    };
+
+    private void handleAction(int action) {
+        switch (action) {
+            case PlayerService.ACTION_PLAY:
+                btnPlay.setImageResource(R.drawable.ic_pause);
+                break;
+            case PlayerService.ACTION_PAUSE:
+                btnPlay.setImageResource(R.drawable.ic_play);
+                break;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_player);
-        Intent intent = getIntent();
-        song = (Song) intent.getSerializableExtra("song");
-        songArrayList = (ArrayList<Song>) intent.getSerializableExtra("songList");
-        index = findSongIndex(songArrayList, song);
+        LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data"));
         Mapping();
-        showInfor();
     }
 
     //Xử lí lặp bài hát
-    private void handleRepeat() {
-        if (mediaPlayer != null) {
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    // Xử lý theo trạng thái nút repeat
-                    switch (buttonState) {
-                        case 0:
-                            btnNext.performClick();
-                            break;
-                        case 1:
-                            mediaPlayer.start();
-                            break;
-                        case 2:
-                            btnPlay.setImageResource(R.drawable.ic_play);
-                            mediaPlayer.pause();
-                            break;
-                    }
-                }
-            });
-        }
-    }
+//    private void handleRepeat() {
+//        if (mediaPlayer != null) {
+//            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//                @Override
+//                public void onCompletion(MediaPlayer mp) {
+//                    // Xử lý theo trạng thái nút repeat
+//                    switch (buttonState) {
+//                        case 0:
+//                            btnNext.performClick();
+//                            break;
+//                        case 1:
+//                            mediaPlayer.start();
+//                            break;
+//                        case 2:
+//                            btnPlay.setImageResource(R.drawable.ic_play);
+//                            mediaPlayer.pause();
+//                            break;
+//                    }
+//                }
+//            });
+//        }
+//    }
 
-
-    //Tìm index của bài hát
-    private int findSongIndex(ArrayList<Song> songArrayList, Song current) {
-        for (int i = 0; i < songArrayList.size(); i++) {
-            Song song = songArrayList.get(i);
-            if (song.getId() == (current.getId())) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     //Xử lí hiển thị khung thời gian
     private String duration2String(int duration) {
@@ -131,19 +119,16 @@ public class PlayerActivity extends AppCompatActivity {
     private Runnable updateSeekBarAndTime = new Runnable() {
         @Override
         public void run() {
-            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                int currentPosition = mediaPlayer.getCurrentPosition();
-                String currentTime = duration2String(currentPosition);
-                // Cập nhật giao diện người dùng trên UI Thread
+            if (isPlaying) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        txtTime.setText(currentTime);
-                        seekbar.setProgress(currentPosition);
+                        // Cập nhật SeekBar và TextView ứng với giá trị mới của position
+                        seekbar.setProgress(position);
+                        txtTime.setText(duration2String(position));
                     }
                 });
             }
-
             // Lập lịch chạy lại Runnable sau 1000ms (1 giây)
             handler.postDelayed(this, 1000);
         }
@@ -161,57 +146,31 @@ public class PlayerActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         stopUpdatingSeekBarAndTime();
-
-        if (mediaPlayer != null) {
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 
-    private void eventClick() {
+    private void eventClick(DatabaseReference albumDB, boolean isAdded, int songID) {
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                    mediaPlayer.pause();
-                    btnPlay.setImageResource(R.drawable.ic_play);
-                } else if (mediaPlayer != null) {
-                    mediaPlayer.start();
-                    btnPlay.setImageResource(R.drawable.ic_pause);
+                if (isPlaying) {
+                    sendActionToService(PlayerService.ACTION_PAUSE);
+                } else {
+                    sendActionToService(PlayerService.ACTION_PLAY);
                 }
             }
         });
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mediaPlayer != null) {
-                    if (mediaPlayer.isPlaying()) {
-                        mediaPlayer.pause();
-                    }
-                    mediaPlayer.release();
-                    mediaPlayer = null;
-                }
-                if (index == songArrayList.size() - 1) {
-                    index = 0;
-                } else index++;
-                showInfor();
+                sendActionToService(PlayerService.ACTION_NEXT);
             }
         });
 
         btnPrev.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mediaPlayer != null) {
-                    if (mediaPlayer.isPlaying()) {
-                        mediaPlayer.pause();
-                    }
-                    mediaPlayer.release();
-                    mediaPlayer = null;
-                }
-                if (index == 0) {
-                    index = songArrayList.size() - 1;
-                } else index--;
-                showInfor();
+                sendActionToService(PlayerService.ACTION_PREV);
             }
         });
         btnRepeat.setOnClickListener(new View.OnClickListener() {
@@ -234,84 +193,59 @@ public class PlayerActivity extends AppCompatActivity {
                         btnRepeat.setAlpha(1f);
                         break;
                 }
-                handleRepeat();
+//                handleRepeat();
+            }
+        });
+        btnAddMusic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isAdded) {
+                    albumDB.child(String.valueOf(songID)).removeValue(new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                            Toast.makeText(PlayerActivity.this, "Removed from album", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    Map<String, Object> dataMap = new HashMap<>();
+                    dataMap.put(String.valueOf(songID), true);
+                    albumDB.updateChildren(dataMap, new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                            Toast.makeText(PlayerActivity.this, "Added to album", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
+        btnExit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PlayerActivity.this.finish();
             }
         });
     }
 
     //Hiển thị thông tin bài hát
     private void showInfor() {
-        Song current = songArrayList.get(index);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         String userUID = user.getUid();
         database = FirebaseDatabase.getInstance();
-        DatabaseReference songDB = database.getReference("song/" + current.getId());
-        DatabaseReference artistDB = database.getReference("artist");
         DatabaseReference albumDB = database.getReference("album/" + userUID + "/song");
-        storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference();
-        StorageReference audioUrl = storageRef.child("song");
-        txtSong.setText(current.getTitle());
-        songDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                int artistID = snapshot.child("artist").getValue(Integer.class);
-                artistDB.child(String.valueOf(artistID)).addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        Artist artist = snapshot.getValue(Artist.class);
-                        txtArtist.setText(artist.getName());
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
-                //Load ảnh
-                audioUrl.child(current.getImage()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        Glide.with(PlayerActivity.this)
-                                .asBitmap()
-                                .load(uri.toString())
-                                .into(new CustomTarget<Bitmap>() {
-                                    @Override
-                                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                        int desiredWidth = 64;
-                                        int desiredHeight = 64;
-                                        bitmap = Bitmap.createScaledBitmap(resource, desiredWidth, desiredHeight, false);
-                                        imgSong.setImageBitmap(resource);
-                                    }
-
-                                    @Override
-                                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                                        // Xử lý khi tải ảnh bị xóa
-                                    }
-                                });
-                    }
-                });
-                //Load mp3
-                loadAudio(current.getName(), audioUrl);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
+        txtSong.setText(song.getTitle());
+        txtArtist.setText(artistName);
+        imgSong.setImageBitmap(bitmap);
         albumDB.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.hasChild(String.valueOf(current.getId()))){
+                if (snapshot.hasChild(String.valueOf(song.getId()))) {
                     isAdded = true;
                     btnAddMusic.setImageResource(R.drawable.ic_added_music);
-                }
-                else {
+                } else {
                     isAdded = false;
                     btnAddMusic.setImageResource(R.drawable.ic_add_music);
                 }
-                eventClick();
+                eventClick(albumDB, isAdded, song.getId());
             }
 
             @Override
@@ -319,82 +253,40 @@ public class PlayerActivity extends AppCompatActivity {
 
             }
         });
+        loadAudio();
+
     }
 
-    private void loadAudio(String name, StorageReference audioUrl) {
-        mediaPlayer = new MediaPlayer();
-        audioUrl.child(name).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+    private void loadAudio() {
+        seekbar.setProgress(position);
+        txtTime.setText(duration2String(position));
+        String duration = duration2String(mediaDuration);
+        txtDuration.setText(duration);
+        seekbar.setMax(mediaDuration);
+        // Bắt đầu cập nhật seekbar và thời gian
+        startUpdatingSeekBarAndTime();
+        seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onSuccess(Uri uri) {
-                try {
-                    mediaPlayer.setDataSource(uri.toString());
-                    mediaPlayer.prepare();
-                    mediaPlayer.seekTo(0);
-                    seekbar.setProgress(0);
-                    txtTime.setText("0:00");
-                    mediaPlayer.start();
-                    btnPlay.setImageResource(R.drawable.ic_pause);
-                    String duration = duration2String(mediaPlayer.getDuration());
-                    txtDuration.setText(duration);
-                    //Xử lí seekbar
-                    seekbar.setMax(mediaPlayer.getDuration());
-                    // Bắt đầu cập nhật seekbar và thời gian
-                    startUpdatingSeekBarAndTime();
-                    seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                        @Override
-                        public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
-                            if (isFromUser) {
-                                mediaPlayer.seekTo(process);
-                                seekbar.setProgress(process);
-                            }
-                        }
-
-                        @Override
-                        public void onStartTrackingTouch(SeekBar seekBar) {
-
-                        }
-
-                        @Override
-                        public void onStopTrackingTouch(SeekBar seekBar) {
-
-                        }
-                    });
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+            public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
+                if (isFromUser) {
+                    rewind = process;
+                    sendActionToService(PlayerService.ACTION_REWIND);
                 }
-                //Xử lí lặp
-                handleRepeat();
-                //Gửi notification
-                sendNotification();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
     }
 
-    private void sendNotification() {
-        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "media session");
-        Notification notification = new NotificationCompat.Builder(this, MusicChanel.CHANNEL_ID)
-                // Show controls on lock screen even when user hides sensitive content.
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setSmallIcon(R.drawable.ic_music)
-                .setLargeIcon(bitmap)
-                // Add media control buttons that invoke intents in your media service
-                .addAction(R.drawable.ic_play_prev, "Previous", null) // #0
-                .addAction(R.drawable.ic_pause, "Pause", null)  // #1
-                .addAction(R.drawable.ic_play_next, "Next", null)     // #2
-                // Apply the media style template.
-                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle()
-                        .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
-                        .setMediaSession(mediaSessionCompat.getSessionToken()))
-                .setContentTitle(txtSong.getText())
-                .setContentText(txtArtist.getText())
-                .build();
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-        notificationManager.notify(songArrayList.get(index).getId(), notification);
-    }
+
     //Ánh xạ id
     private void Mapping() {
         btnExit = findViewById(R.id.btnExit);
@@ -409,5 +301,13 @@ public class PlayerActivity extends AppCompatActivity {
         btnNext = findViewById(R.id.btnNext);
         btnRepeat = findViewById(R.id.btnRepeat);
         btnAddMusic = findViewById(R.id.btnAddMusic);
+    }
+
+    private void sendActionToService(int action) {
+        Intent intent = new Intent(this, PlayerService.class);
+        intent.putExtra("action", action);
+        intent.putExtra("song", song);
+        intent.putExtra("rewind", rewind);
+        startService(intent);
     }
 }

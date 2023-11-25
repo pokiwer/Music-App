@@ -180,13 +180,12 @@ public class DetailActivity extends AppCompatActivity {
         songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(DetailActivity.this, PlayerActivity.class);
+                Intent intent = new Intent(DetailActivity.this, PlayerService.class);
                 intent.putExtra("song", song);
                 intent.putExtra("songList", songArrayList);
-                startActivity(intent);
+                intent.putExtra("isOpen",true);
+                startService(intent);
             }
         });
-
     }
-
 }
