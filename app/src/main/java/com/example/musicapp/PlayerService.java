@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
@@ -40,16 +41,19 @@ public class PlayerService extends Service {
     public static final int ACTION_PLAY = 3;
     public static final int ACTION_NEXT = 4;
     public static final int ACTION_REWIND = 5;
-    public static final int ACTION_CLEAR = 6;
+    public static final int ACTION_REPEAT = 6;
+    public static final int ACTION_CLEAR = 7;
 
-    private int index, rewind, isRepeat = 0;
+    private int index, rewind, isRepeat;
     private ArrayList<Song> songArrayList;
     private MediaPlayer mediaPlayer;
     private DataLoadListener dataLoadListener;
     private Song current;
     private String txtArtist;
     private Bitmap bitmap;
-    private boolean isPlaying = true;
+    private boolean isPlaying = true, isStopped;
+    private Handler handler = new Handler();
+
 
     @Override
     public void onCreate() {
@@ -88,6 +92,8 @@ public class PlayerService extends Service {
         if (intent.hasExtra("rewind")) {
             rewind = intent.getIntExtra("rewind", 0);
         }
+        isRepeat = intent.getIntExtra("isRepeat", isRepeat);
+        sendActionToActivity(ACTION_PLAY);
         handleClick(action);
         return START_NOT_STICKY;
     }
@@ -109,7 +115,7 @@ public class PlayerService extends Service {
 
     private void playSong(Song current) {
         StorageReference audioUrl = FirebaseStorage.getInstance().getReference().child("song");
-        if (mediaPlayer == null) {
+        if (mediaPlayer == null && !isStopped) {
             mediaPlayer = new MediaPlayer();
             audioUrl.child(current.getName()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                 @Override
@@ -120,6 +126,7 @@ public class PlayerService extends Service {
                         mediaPlayer.start();
                         isPlaying = true;
                         sendActionToActivity(ACTION_PLAY);
+                        startUpdatingSeekBarAndTime();
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -128,12 +135,29 @@ public class PlayerService extends Service {
         }
     }
 
+    private Runnable updateSeekBarAndTime = new Runnable() {
+        @Override
+        public void run() {
+            if (isPlaying) {
+                sendActionToActivity(ACTION_REWIND);
+            }
+            // Lập lịch chạy lại Runnable sau 1000ms (1 giây)
+            handler.postDelayed(this, 1000);
+        }
+    };
+
+    private void startUpdatingSeekBarAndTime() {
+        handler.postDelayed(updateSeekBarAndTime, 1000);
+    }
+
+    // Bổ sung phương thức này để dừng việc cập nhật seekbar và thời gian
+    private void stopUpdatingSeekBarAndTime() {
+        handler.removeCallbacks(updateSeekBarAndTime);
+    }
+
     private void handleClick(int action) {
         switch (action) {
             case ACTION_PREV:
-                if (isPlaying) {
-                    mediaPlayer.pause();
-                }
                 mediaPlayer.release();
                 mediaPlayer = null;
                 index--;
@@ -159,9 +183,6 @@ public class PlayerService extends Service {
                 }
                 break;
             case ACTION_NEXT:
-                if (isPlaying) {
-                    mediaPlayer.pause();
-                }
                 mediaPlayer.release();
                 mediaPlayer = null;
                 if (index == songArrayList.size() - 1) {
@@ -176,8 +197,13 @@ public class PlayerService extends Service {
                     mediaPlayer.seekTo(rewind);
                 sendActionToActivity(ACTION_PLAY);
                 break;
+            case ACTION_REPEAT:
+                handleRepeat();
+                sendActionToActivity(ACTION_REPEAT);
+                break;
             case ACTION_CLEAR:
                 stopSelf();
+                sendActionToActivity(ACTION_CLEAR);
                 break;
         }
     }
@@ -190,18 +216,32 @@ public class PlayerService extends Service {
                     // Xử lý theo trạng thái nút repeat
                     switch (isRepeat) {
                         case 0:
-                            mediaPlayer.pause();
-                            isPlaying = false;
-                            getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+                            PendingIntent repeatAll = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+                            try {
+                                repeatAll.send();
+                            } catch (PendingIntent.CanceledException e) {
+                                e.printStackTrace();
+                            }
                             break;
                         case 1:
-                            isPlaying = false;
-                            getPendingIntent(getApplicationContext(), ACTION_PLAY, current);
+                            mediaPlayer.start();
                             break;
                         case 2:
-                            getPendingIntent(getApplicationContext(), ACTION_PAUSE, current);
-                            if (index < songArrayList.size() - 1)
-                                getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+                            if (index < songArrayList.size() - 1) {
+                                PendingIntent next = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+                                try {
+                                    next.send();
+                                } catch (PendingIntent.CanceledException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                PendingIntent noRepeat = getPendingIntent(getApplicationContext(), ACTION_PAUSE, current);
+                                try {
+                                    noRepeat.send();
+                                } catch (PendingIntent.CanceledException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                             break;
                     }
                 }
@@ -224,6 +264,8 @@ public class PlayerService extends Service {
             mediaPlayer.release();
             mediaPlayer = null;
         }
+        isStopped = true;
+        stopUpdatingSeekBarAndTime();
     }
 
     public interface DataLoadListener {
@@ -251,11 +293,14 @@ public class PlayerService extends Service {
         if (isPlaying) {
             notificationBuilder.addAction(R.drawable.ic_play_prev, "Previous", getPendingIntent(this, ACTION_PREV, current)) // #0
                     .addAction(R.drawable.ic_pause, "Pause", getPendingIntent(this, ACTION_PAUSE, current))  // #1
-                    .addAction(R.drawable.ic_play_next, "Next", getPendingIntent(this, ACTION_NEXT, current));  // #2
+                    .addAction(R.drawable.ic_play_next, "Next", getPendingIntent(this, ACTION_NEXT, current))// #2
+                    .addAction(R.drawable.ic_cross, "Stop", getPendingIntent(this, ACTION_CLEAR, current));
         } else {
             notificationBuilder.addAction(R.drawable.ic_play_prev, "Previous", getPendingIntent(this, ACTION_PREV, current)) // #0
                     .addAction(R.drawable.ic_play, "Pause", getPendingIntent(this, ACTION_PLAY, current))  // #1
-                    .addAction(R.drawable.ic_play_next, "Next", getPendingIntent(this, ACTION_NEXT, current));   // #2
+                    .addAction(R.drawable.ic_play_next, "Next", getPendingIntent(this, ACTION_NEXT, current))   // #2
+                    .addAction(R.drawable.ic_cross, "Stop", getPendingIntent(this, ACTION_CLEAR, current));
+
         }
         Notification notification = notificationBuilder.build();
         startForeground(1, notification);
@@ -333,6 +378,7 @@ public class PlayerService extends Service {
             bundle.putInt("duration", mediaPlayer.getDuration());
             bundle.putInt("position", mediaPlayer.getCurrentPosition());
         }
+        bundle.putInt("isRepeat", isRepeat);
         bundle.putBoolean("isPlaying", isPlaying);
         intent.putExtras(bundle);
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);

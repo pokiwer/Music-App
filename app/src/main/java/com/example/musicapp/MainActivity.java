@@ -8,12 +8,14 @@ import androidx.fragment.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -23,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView navigationView;
 
     private Fragment discoverFragment, albumFragment, loveFragment, userFragment;
+    private boolean doubleBackToExitPressedOnce = false;
 
 
 
@@ -88,6 +91,18 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragmentContainerView, fragment)
                 .setReorderingAllowed(true)
                 .commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
+        new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // Thời gian để ngăn double click
     }
 }
 

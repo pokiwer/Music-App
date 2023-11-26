@@ -43,7 +43,7 @@ Button btnLogin, btnRegister;
         }
 
         this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Nhấn Back lần nữa để thoát", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // Thời gian để ngăn double click
     }
 }

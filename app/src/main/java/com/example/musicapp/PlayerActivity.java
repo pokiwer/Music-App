@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -25,6 +26,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,13 +37,12 @@ public class PlayerActivity extends AppCompatActivity {
     TextView txtSong, txtArtist, txtTime, txtDuration;
     SeekBar seekbar;
     ImageButton btnPrev, btnPlay, btnNext, btnRepeat, btnAddMusic;
-    private int buttonState = 0, mediaDuration, position, rewind;
+    private int buttonState, mediaDuration, position, rewind;
     private Song song;
     private Bitmap bitmap;
     private String artistName;
     private boolean isAdded, isPlaying;
     private FirebaseDatabase database;
-    private Handler handler = new Handler();
     private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -54,6 +55,7 @@ public class PlayerActivity extends AppCompatActivity {
             mediaDuration = bundle.getInt("duration", 0);
             position = bundle.getInt("position", 0);
             isPlaying = bundle.getBoolean("isPlaying");
+            buttonState = bundle.getInt("isRepeat",buttonState);
             handleAction(action);
             showInfor();
         }
@@ -67,6 +69,38 @@ public class PlayerActivity extends AppCompatActivity {
             case PlayerService.ACTION_PAUSE:
                 btnPlay.setImageResource(R.drawable.ic_play);
                 break;
+            case PlayerService.ACTION_REPEAT:
+                if (buttonState == 0){
+                    btnRepeat.setImageResource(R.drawable.ic_repeat);
+                    btnRepeat.setAlpha(1f);
+                    Toast.makeText(this, "Repeat all", Toast.LENGTH_SHORT).show();
+                } else if (buttonState == 1) {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                    btnRepeat.setAlpha(1f);
+                    Toast.makeText(this, "Repeat one", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat);
+                    btnRepeat.setAlpha(0.5f);
+                    Toast.makeText(this, "No repeat", Toast.LENGTH_SHORT).show();
+                }
+                case PlayerService.ACTION_CLEAR:
+                    btnExit.performClick();
+                    break;
+        }
+    }
+
+    private void handleRepeat() {
+        if (buttonState == 0){
+            btnRepeat.setImageResource(R.drawable.ic_repeat);
+            btnRepeat.setAlpha(1f);
+        } else if (buttonState == 1) {
+            btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+            btnRepeat.setAlpha(1f);
+        }
+        else {
+            btnRepeat.setImageResource(R.drawable.ic_repeat);
+            btnRepeat.setAlpha(0.5f);
         }
     }
 
@@ -77,31 +111,6 @@ public class PlayerActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(broadcastReceiver, new IntentFilter("send_data"));
         Mapping();
     }
-
-    //Xử lí lặp bài hát
-//    private void handleRepeat() {
-//        if (mediaPlayer != null) {
-//            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-//                @Override
-//                public void onCompletion(MediaPlayer mp) {
-//                    // Xử lý theo trạng thái nút repeat
-//                    switch (buttonState) {
-//                        case 0:
-//                            btnNext.performClick();
-//                            break;
-//                        case 1:
-//                            mediaPlayer.start();
-//                            break;
-//                        case 2:
-//                            btnPlay.setImageResource(R.drawable.ic_play);
-//                            mediaPlayer.pause();
-//                            break;
-//                    }
-//                }
-//            });
-//        }
-//    }
-
 
     //Xử lí hiển thị khung thời gian
     private String duration2String(int duration) {
@@ -116,36 +125,8 @@ public class PlayerActivity extends AppCompatActivity {
         return ellapsedTime;
     }
 
-    private Runnable updateSeekBarAndTime = new Runnable() {
-        @Override
-        public void run() {
-            if (isPlaying) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Cập nhật SeekBar và TextView ứng với giá trị mới của position
-                        seekbar.setProgress(position);
-                        txtTime.setText(duration2String(position));
-                    }
-                });
-            }
-            // Lập lịch chạy lại Runnable sau 1000ms (1 giây)
-            handler.postDelayed(this, 1000);
-        }
-    };
-
-    private void startUpdatingSeekBarAndTime() {
-        handler.postDelayed(updateSeekBarAndTime, 1000);
-    }
-
-    // Bổ sung phương thức này để dừng việc cập nhật seekbar và thời gian
-    private void stopUpdatingSeekBarAndTime() {
-        handler.removeCallbacks(updateSeekBarAndTime);
-    }
-
     protected void onDestroy() {
         super.onDestroy();
-        stopUpdatingSeekBarAndTime();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver);
     }
 
@@ -179,21 +160,17 @@ public class PlayerActivity extends AppCompatActivity {
                 switch (buttonState) {
                     case 0:
                         buttonState = 1;
-                        btnRepeat.setImageResource(R.drawable.ic_repeat_one);
-                        btnRepeat.setAlpha(1f);
+                        sendActionToService(PlayerService.ACTION_REPEAT);
                         break;
                     case 1:
                         buttonState = 2;
-                        btnRepeat.setAlpha(0.5f);
-                        btnRepeat.setImageResource(R.drawable.ic_repeat);
+                        sendActionToService(PlayerService.ACTION_REPEAT);
                         break;
                     case 2:
                         buttonState = 0;
-                        btnRepeat.setImageResource(R.drawable.ic_repeat);
-                        btnRepeat.setAlpha(1f);
+                        sendActionToService(PlayerService.ACTION_REPEAT);
                         break;
                 }
-//                handleRepeat();
             }
         });
         btnAddMusic.setOnClickListener(new View.OnClickListener() {
@@ -225,7 +202,6 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
     }
-
     //Hiển thị thông tin bài hát
     private void showInfor() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -235,6 +211,7 @@ public class PlayerActivity extends AppCompatActivity {
         txtSong.setText(song.getTitle());
         txtArtist.setText(artistName);
         imgSong.setImageBitmap(bitmap);
+        handleRepeat();
         albumDB.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -258,13 +235,13 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void loadAudio() {
+        if (isPlaying)btnPlay.setImageResource(R.drawable.ic_pause);
+        else btnPlay.setImageResource(R.drawable.ic_play);
         seekbar.setProgress(position);
         txtTime.setText(duration2String(position));
         String duration = duration2String(mediaDuration);
         txtDuration.setText(duration);
         seekbar.setMax(mediaDuration);
-        // Bắt đầu cập nhật seekbar và thời gian
-        startUpdatingSeekBarAndTime();
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int process, boolean isFromUser) {
@@ -285,7 +262,6 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
     }
-
 
     //Ánh xạ id
     private void Mapping() {
@@ -308,6 +284,7 @@ public class PlayerActivity extends AppCompatActivity {
         intent.putExtra("action", action);
         intent.putExtra("song", song);
         intent.putExtra("rewind", rewind);
+        intent.putExtra("isRepeat",buttonState);
         startService(intent);
     }
 }
