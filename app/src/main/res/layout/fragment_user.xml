@@ -105,14 +105,16 @@
                         android:paddingLeft="20dp"
                         android:visibility="gone">
                         <TextView
+                            android:id="@+id/txtAlbum"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Album library"
                             android:textSize="20dp"/>
                         <TextView
+                            android:id="@+id/txtArtist"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Favorite songs"
+                            android:text="Artist following"
                             android:textSize="20dp"/>
                     </LinearLayout>
                     <androidx.appcompat.widget.LinearLayoutCompat
@@ -148,11 +150,13 @@
                         android:paddingLeft="20dp"
                         android:visibility="gone">
                         <TextView
+                            android:id="@+id/txtInfor"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Edit profile"
                             android:textSize="20dp"/>
                         <TextView
+                            android:id="@+id/txtChangePass"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="Change password"

@@ -7,13 +7,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -24,23 +31,30 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class DetailActivity extends AppCompatActivity {
 
     private ArrayList<Song> songArrayList;
     private RecyclerView recyclerview;
+    private boolean isFollow;
     ImageView btnReturn, btnFollow, imgArtist;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userUid = user.getUid();
         Intent intent = getIntent();
-        int artistID = intent.getIntExtra("artistID",0);
+        int artistID = intent.getIntExtra("artistID", 0);
         songArrayList = new ArrayList<>();
-        SongAdapter songAdapter = new SongAdapter(this,songArrayList,2);
+        SongAdapter songAdapter = new SongAdapter(this, songArrayList, 2);
         dataInit(songAdapter, artistID);
         Mapping();
-        evenClick(artistID);
+        showInfor(artistID, userUid);
     }
 
     private void Mapping() {
@@ -49,9 +63,30 @@ public class DetailActivity extends AppCompatActivity {
         imgArtist = findViewById(R.id.imgArtist);
     }
 
-    private void evenClick(int artistID) {
+    private void showInfor(int artistID, String userUid) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference artistDB = database.getReference("artist/"+artistID);
+        DatabaseReference artistDB = database.getReference("artist/" + artistID);
+        DatabaseReference followDB = database.getReference("follow/" + userUid + "/artist");
+        followDB.child(String.valueOf(artistID)).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    btnFollow.setAlpha(1f);
+                    btnFollow.setColorFilter(Color.parseColor("#ff0000"), PorterDuff.Mode.SRC_ATOP);
+                    isFollow = true;
+                } else {
+                    btnFollow.setAlpha(0.5f);
+                    btnFollow.setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_ATOP);
+                    isFollow = false;
+                }
+                handleClick(isFollow, followDB, artistID);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -74,6 +109,37 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
+    private void handleClick(boolean isFollow, DatabaseReference followDB, int artistID) {
+        btnFollow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isFollow) {
+                    followDB.child(String.valueOf(artistID)).removeValue(new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                            Toast.makeText(DetailActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    Map<String, Object> dataMap = new HashMap<>();
+                    dataMap.put(String.valueOf(artistID),true);
+                    followDB.updateChildren(dataMap, new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                            Toast.makeText(DetailActivity.this, "Following", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
+        btnReturn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
+    }
+
     private void dataInit(SongAdapter songAdapter, int artistID) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference songDB = database.getReference("song");
@@ -81,8 +147,7 @@ public class DetailActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song song = snapshot.getValue(Song.class);
-                if (song != null && song.getArtist() == artistID)
-                {
+                if (song != null && song.getArtist() == artistID) {
                     songArrayList.add(song);
                     songAdapter.notifyDataSetChanged();
                 }
@@ -115,13 +180,12 @@ public class DetailActivity extends AppCompatActivity {
         songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(DetailActivity.this, PlayerActivity.class);
+                Intent intent = new Intent(DetailActivity.this, PlayerService.class);
                 intent.putExtra("song", song);
-                intent.putExtra("songList",songArrayList);
-                startActivity(intent);
+                intent.putExtra("songList", songArrayList);
+                intent.putExtra("isOpen",true);
+                startService(intent);
             }
         });
-
     }
-
 }

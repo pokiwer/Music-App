@@ -1,5 +1,6 @@
 package com.example.musicapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -7,16 +8,25 @@ import androidx.fragment.app.FragmentManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 
 public class MainActivity extends AppCompatActivity {
     TextView txtTitle;
-    ImageButton btnDiscover, btnAlbum, btnLove, btnUser;
+    private BottomNavigationView navigationView;
+
     private Fragment discoverFragment, albumFragment, loveFragment, userFragment;
-    private ImageButton selectedButton;
+    private boolean doubleBackToExitPressedOnce = false;
+
 
 
     @Override
@@ -25,30 +35,22 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         setContentView(R.layout.activity_main);
         Mapping();
-        BtnControl();
-        updateButtonState(btnDiscover,"Discover");
+        navigationInit();
         String userUid = getIntent().getStringExtra("userID");
         Bundle bundle = new Bundle();
         bundle.putString("userID", userUid);
         userFragment.setArguments(bundle);
         loveFragment.setArguments(bundle);
         albumFragment.setArguments(bundle);
-        SharedPreferences sharedPreferences = getSharedPreferences("account", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("uid",userUid);
-        editor.apply();
     }
 
     private void Mapping()
     {
-        btnDiscover = findViewById(R.id.btnDiscover);
-        btnAlbum = findViewById(R.id.btnAlbum);
-        btnLove = findViewById(R.id.btnLove);
-        btnUser = findViewById(R.id.btnUser);
+        navigationView = findViewById(R.id.navigation);
         txtTitle = findViewById(R.id.txtTitle);
     }
 
-    private void BtnControl()
+    private void navigationInit()
     {
         //Khởi tạo các fragment
         discoverFragment = new DiscoverFragment();
@@ -56,57 +58,51 @@ public class MainActivity extends AppCompatActivity {
         loveFragment = new LoveFragment();
         userFragment = new UserFragment();
         //Click để chuyển các fragment
-        btnDiscover.setOnClickListener(new View.OnClickListener() {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragmentContainerView, discoverFragment)
+                .commit();
+        txtTitle.setText("Home");
+        navigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
-            public void onClick(View view) {
-                switchFragment(discoverFragment, "discover_fragment");
-                updateButtonState(btnDiscover, "Discover");
-            }
-        });
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+                if (itemId == R.id.nav_home) {
+                    switchFragment(discoverFragment);
+                    txtTitle.setText("Home");
 
-        btnAlbum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                switchFragment(albumFragment,"album_fragment");
-                updateButtonState(btnAlbum,"Album");
-            }
-        });
-
-        btnLove.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                switchFragment(loveFragment,"love_fragment");
-                updateButtonState(btnLove,"Love");
-            }
-        });
-
-        btnUser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                switchFragment(userFragment,"user_fragment");
-                updateButtonState(btnUser,"User");
+                } else if (itemId == R.id.nav_album) {
+                    switchFragment(albumFragment);
+                    txtTitle.setText("Category");
+                } else if (itemId == R.id.nav_love) {
+                    switchFragment(loveFragment);
+                    txtTitle.setText("Love");
+                } else if (itemId == R.id.nav_user) {
+                    switchFragment(userFragment);
+                    txtTitle.setText("User");
+                }
+                return true;
             }
         });
     }
     //Hàm chuyển đổi các fragment
-    private void switchFragment(Fragment fragment, String backStackName) {
+    private void switchFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainerView, fragment)
                 .setReorderingAllowed(true)
-                .addToBackStack(backStackName)
                 .commit();
     }
 
-    //Hàm cập nhật trạng thái của các nút điều hướng
-    private void updateButtonState(ImageButton button, String title) {
-        // Đặt độ trong suốt của nút được chọn thành 1 (đậm lên)
-        if (selectedButton != null) {
-            selectedButton.setAlpha(0.5f); // Đặt độ trong suốt của nút cũ
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
         }
-        button.setAlpha(1.0f); // Đặt độ trong suốt của nút mới được chọn
-        selectedButton = button;
-        txtTitle.setText(title);
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
+        new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // Thời gian để ngăn double click
     }
 }
 

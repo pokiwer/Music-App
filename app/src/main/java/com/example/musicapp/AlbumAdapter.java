@@ -50,7 +50,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
         DatabaseReference artistDB = database.getReference("artist");
         Song album = songArrayList.get(position);
         if (album == null) return;
-        artistDB.child(String.valueOf(album.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
+        artistDB.child(String.valueOf(album.getArtist())).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String artistName = snapshot.child("name").getValue(String.class);
@@ -84,11 +84,6 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.MyViewHolder
                         .load(imageUrl)
                         .error(R.drawable.ic_user)
                         .into(holder.imgSong);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d("TAG", "Failed ");
             }
         });
     }

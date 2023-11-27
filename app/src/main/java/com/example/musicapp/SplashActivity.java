@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,8 +29,7 @@ public class SplashActivity extends AppCompatActivity {
                     Intent intent = new Intent(SplashActivity.this, LoginSrceenActivity.class);
                     startActivity(intent);
                 } else {
-                    SharedPreferences sharedPreferences = getSharedPreferences("account", Context.MODE_PRIVATE);
-                    String uid = sharedPreferences.getString("uid", null);
+                    String uid = user.getUid();
                     Intent intent = new Intent(SplashActivity.this, MainActivity.class);
                     intent.putExtra("userID",uid);
                     startActivity(intent);

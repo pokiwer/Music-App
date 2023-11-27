@@ -118,7 +118,9 @@
                     android:layout_height="60dp"
                     android:layout_gravity="center_vertical"
                     android:background="@drawable/custom_btn"
-                    android:src="@drawable/ic_play_prev" />
+                    android:src="@drawable/ic_play_prev"
+                    android:scaleType="fitCenter"
+                    android:padding="10dp"/>
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -129,7 +131,9 @@
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     android:background="@drawable/custom_btn"
-                    android:src="@drawable/ic_play" />
+                    android:src="@drawable/ic_play"
+                    android:scaleType="fitCenter"
+                    android:padding="10dp"/>
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -142,7 +146,9 @@
                     android:layout_gravity="center_vertical"
                     android:background="@drawable/custom_btn"
                     android:src="@drawable/ic_play_next"
-                    app:backgroundTint="@null" />
+                    app:backgroundTint="@null"
+                    android:scaleType="fitCenter"
+                    android:padding="10dp"/>
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"
