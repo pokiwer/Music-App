@@ -2,12 +2,9 @@ package com.example.musicapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,7 +23,7 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user == null) {
-                    Intent intent = new Intent(SplashActivity.this, LoginSrceenActivity.class);
+                    Intent intent = new Intent(SplashActivity.this, LoginScreenActivity.class);
                     startActivity(intent);
                 } else {
                     String uid = user.getUid();

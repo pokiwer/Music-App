@@ -101,7 +101,5 @@
             android:layout_height="wrap_content"
             android:text="Log in"
             android:textStyle="bold" />
-
-
     </androidx.appcompat.widget.LinearLayoutCompat>
 </LinearLayout>

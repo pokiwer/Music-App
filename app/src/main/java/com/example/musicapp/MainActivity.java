@@ -1,24 +1,17 @@
 package com.example.musicapp;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationBarView;
+
 
 public class MainActivity extends AppCompatActivity {
     TextView txtTitle;
@@ -26,7 +19,6 @@ public class MainActivity extends AppCompatActivity {
 
     private Fragment discoverFragment, albumFragment, loveFragment, userFragment;
     private boolean doubleBackToExitPressedOnce = false;
-
 
 
     @Override
@@ -39,19 +31,16 @@ public class MainActivity extends AppCompatActivity {
         String userUid = getIntent().getStringExtra("userID");
         Bundle bundle = new Bundle();
         bundle.putString("userID", userUid);
-        userFragment.setArguments(bundle);
         loveFragment.setArguments(bundle);
         albumFragment.setArguments(bundle);
     }
 
-    private void Mapping()
-    {
+    private void Mapping() {
         navigationView = findViewById(R.id.navigation);
         txtTitle = findViewById(R.id.txtTitle);
     }
 
-    private void navigationInit()
-    {
+    private void navigationInit() {
         //Khởi tạo các fragment
         discoverFragment = new DiscoverFragment();
         albumFragment = new AlbumFragment();
@@ -62,28 +51,26 @@ public class MainActivity extends AppCompatActivity {
                 .replace(R.id.fragmentContainerView, discoverFragment)
                 .commit();
         txtTitle.setText("Home");
-        navigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int itemId = item.getItemId();
-                if (itemId == R.id.nav_home) {
-                    switchFragment(discoverFragment);
-                    txtTitle.setText("Home");
+        navigationView.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_home) {
+                switchFragment(discoverFragment);
+                txtTitle.setText("Home");
 
-                } else if (itemId == R.id.nav_album) {
-                    switchFragment(albumFragment);
-                    txtTitle.setText("Category");
-                } else if (itemId == R.id.nav_love) {
-                    switchFragment(loveFragment);
-                    txtTitle.setText("Love");
-                } else if (itemId == R.id.nav_user) {
-                    switchFragment(userFragment);
-                    txtTitle.setText("User");
-                }
-                return true;
+            } else if (itemId == R.id.nav_album) {
+                switchFragment(albumFragment);
+                txtTitle.setText("Category");
+            } else if (itemId == R.id.nav_love) {
+                switchFragment(loveFragment);
+                txtTitle.setText("Love");
+            } else if (itemId == R.id.nav_user) {
+                switchFragment(userFragment);
+                txtTitle.setText("User");
             }
+            return true;
         });
     }
+
     //Hàm chuyển đổi các fragment
     private void switchFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -104,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
         new Handler().postDelayed(() -> doubleBackToExitPressedOnce = false, 2000); // Thời gian để ngăn double click
     }
+
+
 }
 
 
