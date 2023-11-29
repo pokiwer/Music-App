@@ -12,6 +12,7 @@ import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -55,7 +56,7 @@ public class PlayerActivity extends AppCompatActivity {
             mediaDuration = bundle.getInt("duration", 0);
             position = bundle.getInt("position", 0);
             isPlaying = bundle.getBoolean("isPlaying");
-            buttonState = bundle.getInt("isRepeat",buttonState);
+            buttonState = bundle.getInt("isRepeat", buttonState);
             handleAction(action);
             showInfor();
         }
@@ -70,35 +71,28 @@ public class PlayerActivity extends AppCompatActivity {
                 btnPlay.setImageResource(R.drawable.ic_play);
                 break;
             case PlayerService.ACTION_REPEAT:
-                if (buttonState == 0){
-                    btnRepeat.setImageResource(R.drawable.ic_repeat);
-                    btnRepeat.setAlpha(1f);
+                if (buttonState == 0) {
                     Toast.makeText(this, "Repeat all", Toast.LENGTH_SHORT).show();
                 } else if (buttonState == 1) {
-                    btnRepeat.setImageResource(R.drawable.ic_repeat_one);
-                    btnRepeat.setAlpha(1f);
                     Toast.makeText(this, "Repeat one", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    btnRepeat.setImageResource(R.drawable.ic_repeat);
-                    btnRepeat.setAlpha(0.5f);
+                } else {
                     Toast.makeText(this, "No repeat", Toast.LENGTH_SHORT).show();
                 }
-                case PlayerService.ACTION_CLEAR:
-                    btnExit.performClick();
-                    break;
+                break;
+            case PlayerService.ACTION_CLEAR:
+                btnExit.performClick();
+                break;
         }
     }
 
     private void handleRepeat() {
-        if (buttonState == 0){
+        if (buttonState == 0) {
             btnRepeat.setImageResource(R.drawable.ic_repeat);
             btnRepeat.setAlpha(1f);
         } else if (buttonState == 1) {
             btnRepeat.setImageResource(R.drawable.ic_repeat_one);
             btnRepeat.setAlpha(1f);
-        }
-        else {
+        } else {
             btnRepeat.setImageResource(R.drawable.ic_repeat);
             btnRepeat.setAlpha(0.5f);
         }
@@ -154,23 +148,20 @@ public class PlayerActivity extends AppCompatActivity {
                 sendActionToService(PlayerService.ACTION_PREV);
             }
         });
-        btnRepeat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                switch (buttonState) {
-                    case 0:
-                        buttonState = 1;
-                        sendActionToService(PlayerService.ACTION_REPEAT);
-                        break;
-                    case 1:
-                        buttonState = 2;
-                        sendActionToService(PlayerService.ACTION_REPEAT);
-                        break;
-                    case 2:
-                        buttonState = 0;
-                        sendActionToService(PlayerService.ACTION_REPEAT);
-                        break;
-                }
+        btnRepeat.setOnClickListener(view -> {
+            switch (buttonState) {
+                case 0:
+                    buttonState = 1;
+                    sendActionToService(PlayerService.ACTION_REPEAT);
+                    break;
+                case 1:
+                    buttonState = 2;
+                    sendActionToService(PlayerService.ACTION_REPEAT);
+                    break;
+                case 2:
+                    buttonState = 0;
+                    sendActionToService(PlayerService.ACTION_REPEAT);
+                    break;
             }
         });
         btnAddMusic.setOnClickListener(new View.OnClickListener() {
@@ -202,6 +193,7 @@ public class PlayerActivity extends AppCompatActivity {
             }
         });
     }
+
     //Hiển thị thông tin bài hát
     private void showInfor() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -235,7 +227,7 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void loadAudio() {
-        if (isPlaying)btnPlay.setImageResource(R.drawable.ic_pause);
+        if (isPlaying) btnPlay.setImageResource(R.drawable.ic_pause);
         else btnPlay.setImageResource(R.drawable.ic_play);
         seekbar.setProgress(position);
         txtTime.setText(duration2String(position));
@@ -284,7 +276,7 @@ public class PlayerActivity extends AppCompatActivity {
         intent.putExtra("action", action);
         intent.putExtra("song", song);
         intent.putExtra("rewind", rewind);
-        intent.putExtra("isRepeat",buttonState);
+        intent.putExtra("isRepeat", buttonState);
         startService(intent);
     }
 }

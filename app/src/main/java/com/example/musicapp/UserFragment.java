@@ -1,13 +1,23 @@
 package com.example.musicapp;
 
+
+import android.Manifest;
+import android.app.Dialog;
 import android.content.Intent;
 
+
+import android.content.pm.PackageManager;
+import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Bundle;
 
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -16,10 +26,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -33,23 +47,34 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class UserFragment extends Fragment {
 
+    private static final int PERMISSION_GALLERY = 1;
     private Fragment albumFragment, loveFragment;
-    private boolean isTxtCategoryVisible = false;
-    private boolean isTxtProfileVisible = false;
+
     ImageButton btnCategory, btnProfile;
     LinearLayoutCompat category, profile;
     LinearLayout txtCategory, txtProfile;
-    TextView txtUser, txtLogout, txtAlbum, txtArtist, txtInfor,txtChangePass;
-    ImageView imgUser;
+    TextView txtUser, txtLogout, txtAlbum, txtArtist, txtInfor, txtChangePass;
+    ImageView imgUser, imgCurrent;
+    private ActivityResultLauncher<Intent> checkPermission;
+    private User showUser;
+    private FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    private DatabaseReference userDB = FirebaseDatabase.getInstance().getReference("user/" + user.getUid());
+    private StorageReference storageRef = FirebaseStorage.getInstance().getReference("user");
+
+    private Uri imageUri;
 
     public UserFragment() {
         // Required empty public constructor
     }
-
 
 
     @Override
@@ -58,30 +83,13 @@ public class UserFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_user, container, false);
         //mapping id
         Mapping(rootView);
-        //List options
-        View.OnClickListener categoryClickListener = view -> {
-            if (isTxtCategoryVisible) {
-                txtCategory.setVisibility(View.GONE);
-                isTxtCategoryVisible = false;
-            } else {
-                txtCategory.setVisibility(View.VISIBLE);
-                isTxtCategoryVisible = true;
-            }
-        };
-        View.OnClickListener profileClickListener = view -> {
-            if (isTxtProfileVisible) {
-                txtProfile.setVisibility(View.GONE);
-                isTxtProfileVisible = false;
-            } else {
-                txtProfile.setVisibility(View.VISIBLE);
-                isTxtProfileVisible = true;
-            }
-        };
+
         //Event click
         eventClick();
 
         //show user information
         showUser();
+        setCheckPermission();
 
         return rootView;
     }
@@ -105,17 +113,80 @@ public class UserFragment extends Fragment {
 
         txtLogout.setOnClickListener(view -> {
             FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(getActivity(), LoginSrceenActivity.class);
+            Intent intent = new Intent(getActivity(), LoginScreenActivity.class);
             startActivity(intent);
-            getActivity().finish();
+            if (getActivity() != null) {
+                getActivity().finish();
+            }
         });
 
-        txtAlbum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                albumFragment = new AlbumFragment();
-                changeFragment(albumFragment);
-            }
+        txtAlbum.setOnClickListener(view -> {
+            albumFragment = new AlbumFragment();
+            changeFragment(albumFragment);
+        });
+
+
+        txtInfor.setOnClickListener(txtInforView -> {
+            Dialog customDialog = new Dialog(getContext());
+            customDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            customDialog.setContentView(R.layout.custom_edit_profile);
+            imgCurrent = customDialog.findViewById(R.id.imgCurrent);
+            EditText edtName, edtBirth, edtPhone;
+            edtName = customDialog.findViewById(R.id.edtName);
+            edtBirth = customDialog.findViewById(R.id.edtBirth);
+            edtPhone = customDialog.findViewById(R.id.edtPhone);
+            Button btnUpdate = customDialog.findViewById(R.id.btnUpdate);
+            edtName.setText(showUser.getName());
+            edtBirth.setText(showUser.getBirth());
+            edtPhone.setText(showUser.getPhone());
+            ImageButton btnChangeImage = customDialog.findViewById(R.id.btnChangeImage);
+            imgCurrent.setImageDrawable(imgUser.getDrawable());
+            customDialog.show();
+            btnChangeImage.setOnClickListener(btnChangeImageView -> requestPermission());
+            btnUpdate.setOnClickListener(btnUpdateView -> {
+                if (imageUri != null) {
+                    Date now = new Date();
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                    String fileName = sdf.format(now);
+                    storageRef.child(fileName).putFile(imageUri).addOnSuccessListener(taskSnapshot -> {
+                        Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("name",edtName.getText().toString());
+                        updateData.put("image", fileName);
+                        updateData.put("phone", edtPhone.getText().toString());
+                        updateData.put("birth", edtBirth.getText().toString());
+                        userDB.updateChildren(updateData, (error, ref) -> {
+                            customDialog.dismiss();
+                            Toast.makeText(getActivity(), "Update success", Toast.LENGTH_SHORT).show();
+                        });
+                    }).addOnFailureListener(e -> Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show());
+                }
+                else {
+                    Map<String, Object> updateData = new HashMap<>();
+                    updateData.put("name",edtName.getText().toString());
+                    updateData.put("phone", edtPhone.getText().toString());
+                    updateData.put("birth", edtBirth.getText().toString());
+                    userDB.updateChildren(updateData, (error, ref) -> {
+                        customDialog.dismiss();
+                        Toast.makeText(getActivity(), "Update success", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            });
+        });
+
+        txtChangePass.setOnClickListener(txtChangePassView -> {
+            Dialog customDialog = new Dialog(getContext());
+            customDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            customDialog.setContentView(R.layout.custom_change_pass);
+            EditText edtOld, edtNew, edtConfirm;
+            edtNew = customDialog.findViewById(R.id.edtNew);
+            edtOld = customDialog.findViewById(R.id.edtOld);
+            edtConfirm = customDialog.findViewById(R.id.edtConfirm);
+            TextView txtForgot = customDialog.findViewById(R.id.txtForgot);
+            Button btnUpdate = customDialog.findViewById(R.id.btnUpdate);
+            btnUpdate.setOnClickListener(view -> {
+                customDialog.dismiss();
+            });
+            customDialog.show();
         });
     }
 
@@ -129,37 +200,21 @@ public class UserFragment extends Fragment {
 
     private void showUser() {
         //Show thông tin người dùng
-        String userUid = getArguments().getString("userID");
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
         String email = user.getEmail();
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        String path = "user/" + userUid;
-        DatabaseReference myRef = database.getReference(path);
         ValueEventListener userListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                String value = dataSnapshot.child("name").getValue(String.class);
-                String image = dataSnapshot.child("image").getValue(String.class);
-                txtUser.setText(value);
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference storageRef = storage.getReference();
-                StorageReference pathReference = storageRef.child("user/" + image);
-                pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        String imageUrl = uri.toString();
-                        Glide.with(getActivity())
-                                .load(imageUrl)
-                                .error(R.drawable.ic_user)
-                                .into(imgUser);
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d("TAG", "Failed ");
-                    }
-                });
+                showUser = dataSnapshot.getValue(User.class);
+                txtUser.setText(showUser.getName());
+                StorageReference pathReference = storageRef.child(showUser.getImage());
+                pathReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                    String imageUrl = uri.toString();
+                    Glide.with(getActivity())
+                            .load(imageUrl)
+                            .error(R.drawable.ic_user)
+                            .into(imgUser);
+                }).addOnFailureListener(e -> Log.d("TAG", "Failed "));
             }
 
             @Override
@@ -167,9 +222,7 @@ public class UserFragment extends Fragment {
                 txtUser.setText(email);
             }
         };
-        myRef.addValueEventListener(userListener);
-
-
+        userDB.addValueEventListener(userListener);
     }
 
     private void Mapping(View rootView) {
@@ -186,6 +239,30 @@ public class UserFragment extends Fragment {
         txtArtist = rootView.findViewById(R.id.txtArtist);
         txtInfor = rootView.findViewById(R.id.txtInfor);
         txtChangePass = rootView.findViewById(R.id.txtChangePass);
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType("image/*");
+        checkPermission.launch(intent);
+    }
+
+    private void setCheckPermission() {
+        checkPermission = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), o -> {
+            try {
+                imageUri  = o.getData().getData();
+                imgCurrent.setImageURI(imageUri);
+            } catch (Exception e) {
+                e.getStackTrace();
+                Toast.makeText(getActivity(), "No image chosen", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void requestPermission() {
+        if (ActivityCompat.checkSelfPermission(getActivity(), android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_GALLERY);
+        } else openGallery();
     }
 
 }
