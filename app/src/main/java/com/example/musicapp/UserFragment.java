@@ -7,6 +7,7 @@ import android.content.Intent;
 
 
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.icu.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Bundle;
@@ -14,14 +15,16 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,8 +39,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -47,10 +52,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -66,9 +71,9 @@ public class UserFragment extends Fragment {
     ImageView imgUser, imgCurrent;
     private ActivityResultLauncher<Intent> checkPermission;
     private User showUser;
-    private FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-    private DatabaseReference userDB = FirebaseDatabase.getInstance().getReference("user/" + user.getUid());
-    private StorageReference storageRef = FirebaseStorage.getInstance().getReference("user");
+    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    private final DatabaseReference userDB = FirebaseDatabase.getInstance().getReference("user/" + user.getUid());
+    private final StorageReference storageRef = FirebaseStorage.getInstance().getReference("user");
 
     private Uri imageUri;
 
@@ -124,7 +129,10 @@ public class UserFragment extends Fragment {
             albumFragment = new AlbumFragment();
             changeFragment(albumFragment);
         });
-
+        txtArtist.setOnClickListener(view -> {
+            loveFragment = new LoveFragment();
+            changeFragment(loveFragment);
+        });
 
         txtInfor.setOnClickListener(txtInforView -> {
             Dialog customDialog = new Dialog(getContext());
@@ -146,11 +154,11 @@ public class UserFragment extends Fragment {
             btnUpdate.setOnClickListener(btnUpdateView -> {
                 if (imageUri != null) {
                     Date now = new Date();
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy", new Locale("vi", "VN"));
                     String fileName = sdf.format(now);
                     storageRef.child(fileName).putFile(imageUri).addOnSuccessListener(taskSnapshot -> {
                         Map<String, Object> updateData = new HashMap<>();
-                        updateData.put("name",edtName.getText().toString());
+                        updateData.put("name", edtName.getText().toString());
                         updateData.put("image", fileName);
                         updateData.put("phone", edtPhone.getText().toString());
                         updateData.put("birth", edtBirth.getText().toString());
@@ -159,10 +167,9 @@ public class UserFragment extends Fragment {
                             Toast.makeText(getActivity(), "Update success", Toast.LENGTH_SHORT).show();
                         });
                     }).addOnFailureListener(e -> Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show());
-                }
-                else {
+                } else {
                     Map<String, Object> updateData = new HashMap<>();
-                    updateData.put("name",edtName.getText().toString());
+                    updateData.put("name", edtName.getText().toString());
                     updateData.put("phone", edtPhone.getText().toString());
                     updateData.put("birth", edtBirth.getText().toString());
                     userDB.updateChildren(updateData, (error, ref) -> {
@@ -177,16 +184,136 @@ public class UserFragment extends Fragment {
             Dialog customDialog = new Dialog(getContext());
             customDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
             customDialog.setContentView(R.layout.custom_change_pass);
+            TextView txtOld, txtNew, txtConfirm, txtForgot;
+            txtOld = customDialog.findViewById(R.id.txtOld);
+            txtNew = customDialog.findViewById(R.id.txtNew);
+            txtConfirm = customDialog.findViewById(R.id.txtConfirm);
             EditText edtOld, edtNew, edtConfirm;
             edtNew = customDialog.findViewById(R.id.edtNew);
             edtOld = customDialog.findViewById(R.id.edtOld);
             edtConfirm = customDialog.findViewById(R.id.edtConfirm);
-            TextView txtForgot = customDialog.findViewById(R.id.txtForgot);
+            txtForgot = customDialog.findViewById(R.id.txtForgot);
             Button btnUpdate = customDialog.findViewById(R.id.btnUpdate);
-            btnUpdate.setOnClickListener(view -> {
-                customDialog.dismiss();
-            });
             customDialog.show();
+            edtNew.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    txtNew.setText("New password");
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    String text = editable.toString();
+                    if (text.length() < 6) {
+                        txtNew.setText("Must be at least 6 characters");
+                        txtNew.setTextColor(Color.parseColor("#FF0000"));
+                    } else if(text.length() < 9) {
+                        txtNew.setText("Nomal password");
+                        txtNew.setTextColor(Color.parseColor("#FFA500"));
+                    }
+                    else {
+                        txtNew.setText("Strong password");
+                        txtNew.setTextColor(Color.parseColor("#008000"));
+                    }
+
+                }
+            });
+            edtConfirm.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    txtConfirm.setText("Confirm new password");
+                    txtConfirm.setTextColor(Color.parseColor("#000000"));
+                }
+            });
+            edtOld.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    txtOld.setText("Current password");
+                    txtOld.setTextColor(Color.parseColor("#000000"));
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+
+                }
+            });
+            txtForgot.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getActivity(),ResetPassActivity.class);
+                    startActivity(intent);
+                }
+            });
+            btnUpdate.setOnClickListener(view -> {
+                if (edtOld.getText().toString().equals("")){
+                    txtOld.setText("Enter your current password");
+                    txtOld.setTextColor(Color.parseColor("#FF0000"));
+                }
+                else{
+                    if (edtNew.getText().toString().equals(""))
+                    {
+                        txtNew.setText("Enter your new password");
+                        txtNew.setTextColor(Color.parseColor("#FF0000"));
+                    }
+                    else {
+                        if (edtConfirm.getText().toString().equals("")){
+                            txtConfirm.setText("Enter confirm new password");
+                            txtConfirm.setTextColor(Color.parseColor("#FF0000"));
+                        }
+                        else {
+                            if (!edtConfirm.getText().toString().equals(edtNew.getText().toString()))
+                            {
+                                txtConfirm.setText("Confirmation password does not match");
+                                txtConfirm.setTextColor(Color.parseColor("#FF0000"));
+                            }
+                            else {
+                                AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(),edtOld.getText().toString());
+                                user.reauthenticate(authCredential).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()){
+                                            user.updatePassword(edtNew.getText().toString()).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()){
+                                                        Toast.makeText(getActivity(), "Update password successful", Toast.LENGTH_SHORT).show();
+                                                        customDialog.dismiss();
+                                                    }
+                                                    else Toast.makeText(getActivity(), "Update failed", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }else {
+                                            txtOld.setText("Current password does not match");
+                                            txtOld.setTextColor(Color.parseColor("#FF0000"));
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    }
+                }
+            });
+
         });
     }
 
@@ -250,7 +377,7 @@ public class UserFragment extends Fragment {
     private void setCheckPermission() {
         checkPermission = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), o -> {
             try {
-                imageUri  = o.getData().getData();
+                imageUri = o.getData().getData();
                 imgCurrent.setImageURI(imageUri);
             } catch (Exception e) {
                 e.getStackTrace();
