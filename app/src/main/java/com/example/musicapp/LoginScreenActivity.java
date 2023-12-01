@@ -9,7 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class LoginSrceenActivity extends AppCompatActivity {
+public class LoginScreenActivity extends AppCompatActivity {
 Button btnLogin, btnRegister;
     private boolean doubleBackToExitPressedOnce = false;
     @Override
@@ -21,7 +21,7 @@ Button btnLogin, btnRegister;
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LoginSrceenActivity.this, LoginActivity.class);
+                Intent intent = new Intent(LoginScreenActivity.this, LoginActivity.class);
                 startActivity(intent);
             }
         });
@@ -29,7 +29,7 @@ Button btnLogin, btnRegister;
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LoginSrceenActivity.this, RegisterActivity.class);
+                Intent intent = new Intent(LoginScreenActivity.this, RegisterActivity.class);
                 startActivity(intent);
             }
         });

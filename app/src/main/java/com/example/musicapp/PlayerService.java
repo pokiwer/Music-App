@@ -79,10 +79,10 @@ public class PlayerService extends Service {
             current = songArrayList.get(index);
             mediaPlayer.release();
             mediaPlayer = null;
-            showSong();
+//            showSong();
         } else {
             current = song;
-            showSong();
+//            showSong();
         }
         if (intent.hasExtra("isOpen")) {
             Intent dialogIntent = new Intent(this, PlayerActivity.class);
@@ -93,6 +93,9 @@ public class PlayerService extends Service {
             rewind = intent.getIntExtra("rewind", 0);
         }
         isRepeat = intent.getIntExtra("isRepeat", isRepeat);
+        if (mediaPlayer == null || !mediaPlayer.isPlaying()) {
+            showSong();
+        }
         sendActionToActivity(ACTION_PLAY);
         handleClick(action);
         return START_NOT_STICKY;
@@ -158,6 +161,7 @@ public class PlayerService extends Service {
     private void handleClick(int action) {
         switch (action) {
             case ACTION_PREV:
+                stopUpdatingSeekBarAndTime();
                 mediaPlayer.release();
                 mediaPlayer = null;
                 index--;
@@ -183,6 +187,7 @@ public class PlayerService extends Service {
                 }
                 break;
             case ACTION_NEXT:
+                stopUpdatingSeekBarAndTime();
                 mediaPlayer.release();
                 mediaPlayer = null;
                 if (index == songArrayList.size() - 1) {
