@@ -1,35 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".MainActivity"
     android:background="@mipmap/bg_app"
-    >
-
-    <LinearLayout
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+    <TextView
+        android:id="@+id/txtTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:padding="14dp">
-
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/ic_back"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/txtTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:textSize="20dp"
-            android:textStyle="bold"/>
-    </LinearLayout>
-
+        android:gravity="center_horizontal"
+        android:textSize="20dp"
+        android:textStyle="bold"
+        android:layout_marginTop="15dp"/>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -43,59 +28,11 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <LinearLayout
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/navigation"
+        style="@style/Widget.MaterialComponents.ActionBar.Primary"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:background="#E6FFFF"
-        android:elevation="64dp"
-        android:padding="16dp"
-        >
-
-        <ImageButton
-            android:id="@+id/btnDiscover"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1"
-            android:alpha="0.5"
-            android:backgroundTint="@android:color/transparent"
-            android:src="@drawable/ic_home2" />
-
-        <ImageButton
-            android:id="@+id/btnAlbum"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1"
-            android:alpha="0.5"
-            android:backgroundTint="@android:color/transparent"
-            android:src="@drawable/ic_music" />
-
-        <ImageButton
-            android:id="@+id/btnLove"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1"
-            android:alpha="0.5"
-            android:backgroundTint="@android:color/transparent"
-            android:src="@drawable/ic_love" />
-
-
-        <ImageButton
-            android:id="@+id/btnUser"
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1"
-            android:alpha="0.5"
-            android:backgroundTint="@android:color/transparent"
-            android:src="@drawable/ic_user" />
-    </LinearLayout>
+        android:layout_height="45dp"
+        app:labelVisibilityMode="unlabeled"
+        app:menu="@menu/menu_nav" />
 </LinearLayout>

@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +22,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
+
+import androidx.core.app.NotificationManagerCompat;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,7 +41,7 @@ public class DiscoverFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private ArrayList<Artist> artistArrayList;
-    private ArrayList<Song> famousArrayList,newsArrayList, songArrayList;
+    private ArrayList<Song> famousArrayList, newsArrayList, songArrayList;
     private RecyclerView famous, news, popular, song;
 
     public DiscoverFragment() {
@@ -86,7 +90,6 @@ public class DiscoverFragment extends Fragment {
         famousArrayList = new ArrayList<>();
         FamousAdapter famousAdapter = new FamousAdapter(getContext(), famousArrayList);
         dataInitFamous(famousAdapter, view);
-
         //Thêm list các bài hát mới
         newsArrayList = new ArrayList<>();
         NewsAdapter newsAdapter = new NewsAdapter(getContext(), newsArrayList);
@@ -97,8 +100,8 @@ public class DiscoverFragment extends Fragment {
         dataInitPopular(popularAdapter, view);
         //Thêm list các bài hát
         songArrayList = new ArrayList<>();
-        SongAdapter songAdapter = new SongAdapter(getContext(),songArrayList,1);
-        dataInitSong(songAdapter,view);
+        SongAdapter songAdapter = new SongAdapter(getContext(), songArrayList, 1);
+        dataInitSong(songAdapter, view);
     }
 
     private void dataInitSong(SongAdapter songAdapter, View view) {
@@ -109,7 +112,7 @@ public class DiscoverFragment extends Fragment {
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song song = snapshot.getValue(Song.class);
                 if (song != null) {
-                    songArrayList.add(0,song);
+                    songArrayList.add(0, song);
                     songAdapter.notifyDataSetChanged();
                 }
             }
@@ -141,24 +144,25 @@ public class DiscoverFragment extends Fragment {
         songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                Intent intent = new Intent(getActivity(), PlayerService.class);
                 intent.putExtra("song", song);
-                intent.putExtra("songList",songArrayList);
-                startActivity(intent);
+                intent.putExtra("songList", songArrayList);
+                intent.putExtra("isOpen",true);
+                getActivity().startService(intent);
             }
         });
     }
 
     private void dataInitNews(NewsAdapter newsAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference songdb = database.getReference("song");
-        Query query = songdb.orderByChild("id");
+        DatabaseReference songDB = database.getReference("song");
+        Query query = songDB.orderByChild("id");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song news = snapshot.getValue(Song.class);
                 if (news != null) {
-                    newsArrayList.add(0,news);
+                    newsArrayList.add(0, news);
                     newsAdapter.notifyDataSetChanged();
                 }
             }
@@ -190,24 +194,25 @@ public class DiscoverFragment extends Fragment {
         newsAdapter.setOnUserClickListener(new NewsAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                Intent intent = new Intent(getActivity(), PlayerService.class);
                 intent.putExtra("song", song);
-                intent.putExtra("songList",newsArrayList);
-                startActivity(intent);
+                intent.putExtra("songList", newsArrayList);
+                intent.putExtra("isOpen",true);
+                getActivity().startService(intent);
             }
         });
     }
 
     private void dataInitFamous(FamousAdapter famousAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference songdb = database.getReference("song");
-        Query query = songdb.orderByChild("numListen");
+        DatabaseReference songDB = database.getReference("song");
+        Query query = songDB.orderByChild("numListen");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Song famous = snapshot.getValue(Song.class);
                 if (famous != null) {
-                    famousArrayList.add(0,famous);
+                    famousArrayList.add(0, famous);
                     famousAdapter.notifyDataSetChanged();
                 }
             }
@@ -240,24 +245,25 @@ public class DiscoverFragment extends Fragment {
         famousAdapter.setOnUserClickListener(new FamousAdapter.OnUserClickListener() {
             @Override
             public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerActivity.class);
+                Intent intent = new Intent(getActivity(), PlayerService.class);
                 intent.putExtra("song", song);
-                intent.putExtra("songList",famousArrayList);
-                startActivity(intent);
+                intent.putExtra("songList", famousArrayList);
+                intent.putExtra("isOpen",true);
+                getActivity().startService(intent);
             }
         });
     }
 
     private void dataInitPopular(PopularAdapter popularAdapter, View view) {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference artistdb = database.getReference("artist");
-        Query query = artistdb.orderByChild("numFollow");
+        DatabaseReference artistDB = database.getReference("artist");
+        Query query = artistDB.orderByChild("numFollow");
         query.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Artist artist = snapshot.getValue(Artist.class);
                 if (artist != null) {
-                    artistArrayList.add(0,artist);
+                    artistArrayList.add(0, artist);
                     popularAdapter.setOnUserClickListener(new PopularAdapter.OnUserClickListener() {
                         @Override
                         public void onUserClick(Artist artist) {

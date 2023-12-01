@@ -9,10 +9,13 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,6 +42,7 @@ public class LoveFragment extends Fragment {
     private String mParam2;
     private ArrayList<Artist> artistArrayList;
     private RecyclerView recyclerview;
+    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
     public LoveFragment() {
         // Required empty public constructor
@@ -82,7 +86,7 @@ public class LoveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        String userUid = getArguments().getString("userID");
+        String userUid = user.getUid();
         artistArrayList = new ArrayList<>();
         LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList, userUid);
         dataInit(loveAdapter, userUid);

@@ -2,17 +2,16 @@ package com.example.musicapp;
 
 public class User {
 
-    private String name, image, address, phone, uid;
+    private String name, image, phone, birth;
 
     public User() {
     }
 
-    public User(String name, String image, String address, String phone, String uid) {
+    public User(String name, String image, String phone, String birth) {
         this.name = name;
         this.image = image;
-        this.address = address;
         this.phone = phone;
-        this.uid = uid;
+        this.birth = birth;
     }
 
     public String getName() {
@@ -31,13 +30,7 @@ public class User {
         this.image = image;
     }
 
-    public String getAddress() {
-        return address;
-    }
 
-    public void setAddress(String address) {
-        this.address = address;
-    }
 
     public String getPhone() {
         return phone;
@@ -47,11 +40,11 @@ public class User {
         this.phone = phone;
     }
 
-    public String getUid() {
-        return uid;
+    public String getBirth() {
+        return birth;
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
+    public void setBirth(String birth) {
+        this.birth = birth;
     }
 }

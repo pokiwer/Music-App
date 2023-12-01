@@ -1,6 +1,7 @@
 package com.example.musicapp;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -19,6 +20,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class RegisterActivity extends AppCompatActivity {
     TextView txtAccept, txtEmailReg, txtPassReg, txtConfirm, txtLogin;
@@ -90,15 +94,23 @@ public class RegisterActivity extends AppCompatActivity {
                                                 @Override
                                                 public void onComplete(@NonNull Task<AuthResult> task) {
                                                     if (task.isSuccessful()) {
+                                                        DatabaseReference userDB = FirebaseDatabase.getInstance().getReference("user");
                                                         FirebaseUser user = task.getResult().getUser();
                                                         String uid = user.getUid();
-                                                        Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
-                                                        intent.putExtra("userID",uid);
-                                                        startActivity(intent);
-                                                        finishAffinity();
+                                                        User addUser = new User(email,"","","");
+                                                        userDB.child(uid).setValue(addUser, new DatabaseReference.CompletionListener() {
+                                                            @Override
+                                                            public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
+                                                                Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                                                                intent.putExtra("userID",uid);
+                                                                startActivity(intent);
+                                                                finishAffinity();
+                                                            }
+                                                        });
+
                                                     } else {
                                                         // If sign in fails, display a message to the user.
-                                                        Toast.makeText(RegisterActivity.this, "Authentication failed.",
+                                                        Toast.makeText(RegisterActivity.this, "Register failed.",
                                                                 Toast.LENGTH_SHORT).show();
                                                     }
                                                 }

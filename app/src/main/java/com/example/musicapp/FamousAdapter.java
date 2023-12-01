@@ -103,7 +103,8 @@ public class FamousAdapter extends RecyclerView.Adapter<FamousAdapter.MyViewHold
 
     @Override
     public int getItemCount() {
-        return famousArrayList.size();
+        int size = 10;
+        return Math.min(famousArrayList.size(),size);
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {

@@ -2,9 +2,7 @@ package com.example.musicapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 
@@ -25,11 +23,10 @@ public class SplashActivity extends AppCompatActivity {
             public void run() {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user == null) {
-                    Intent intent = new Intent(SplashActivity.this, LoginSrceenActivity.class);
+                    Intent intent = new Intent(SplashActivity.this, LoginScreenActivity.class);
                     startActivity(intent);
                 } else {
-                    SharedPreferences sharedPreferences = getSharedPreferences("account", Context.MODE_PRIVATE);
-                    String uid = sharedPreferences.getString("uid", null);
+                    String uid = user.getUid();
                     Intent intent = new Intent(SplashActivity.this, MainActivity.class);
                     intent.putExtra("userID",uid);
                     startActivity(intent);
