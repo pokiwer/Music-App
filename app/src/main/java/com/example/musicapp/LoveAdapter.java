@@ -1,7 +1,6 @@
 package com.example.musicapp;
 
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,13 +12,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -54,11 +46,8 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
         holder.txtArtist.setText(artist.getName());
         holder.txtNumsong.setText(String.valueOf(artist.getNumSong()) + " songs");
         loadImage(artist, holder);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (clickListener != null) clickListener.onUserClick(artist);
-            }
+        holder.itemView.setOnClickListener(view -> {
+            if (clickListener != null) clickListener.onUserClick(artist);
         });
     }
 
@@ -66,21 +55,13 @@ public class LoveAdapter extends RecyclerView.Adapter<LoveAdapter.MyViewHolder> 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference pathReference = storageRef.child("artist/" + artist.getImage());
-        pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                String imageUrl = uri.toString();
-                Glide.with(holder.itemView.getContext())
-                        .load(imageUrl)
-                        .error(R.drawable.ic_user)
-                        .into(holder.imgArtist);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d("TAG", "Failed ");
-            }
-        });
+        pathReference.getDownloadUrl().addOnSuccessListener(uri -> {
+            String imageUrl = uri.toString();
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .error(R.drawable.ic_user)
+                    .into(holder.imgArtist);
+        }).addOnFailureListener(e -> Log.d("TAG", "Failed "));
     }
 
     @Override

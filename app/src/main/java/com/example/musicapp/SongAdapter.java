@@ -1,13 +1,10 @@
 package com.example.musicapp;
 
-import android.app.Activity;
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -16,8 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -52,9 +47,6 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
         Song song = songArrayList.get(position);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference artistDB = database.getReference("artist/" + song.getArtist());
-        if (song == null) {
-            return;
-        }
         //type = 1 => list tổng hợp tất cả bài hát
         if (type == 1) {
             artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -93,11 +85,8 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
             loadImage(song, holder);
 
         }
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (clickListener != null) clickListener.onUserClick(song);
-            }
+        holder.itemView.setOnClickListener(view -> {
+            if (clickListener != null) clickListener.onUserClick(song);
         });
 
     }
@@ -106,21 +95,13 @@ public class SongAdapter extends RecyclerView.Adapter<SongAdapter.MyViewHolder> 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference();
         StorageReference pathReference = storageRef.child("song/" + song.getImage());
-        pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                String imageUrl = uri.toString();
-                Glide.with(holder.itemView.getContext())
-                        .load(imageUrl)
-                        .error(R.drawable.ic_user)
-                        .into(holder.imgSong);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Log.d("TAG", "Failed ");
-            }
-        });
+        pathReference.getDownloadUrl().addOnSuccessListener(uri -> {
+            String imageUrl = uri.toString();
+            Glide.with(holder.itemView.getContext())
+                    .load(imageUrl)
+                    .error(R.drawable.ic_user)
+                    .into(holder.imgSong);
+        }).addOnFailureListener(e -> Log.d("TAG", "Failed "));
     }
 
     @Override

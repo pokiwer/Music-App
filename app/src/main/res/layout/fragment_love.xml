@@ -38,6 +38,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/txtArtist"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Jpop 2022"
@@ -45,14 +46,16 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtNumSong"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="30 songs - 12.859 followers" />
 
                         <Button
+                            android:id="@+id/btnAddFollow"
                             android:layout_width="204dp"
                             android:layout_height="48dp"
-                            android:text="FOLLOW" />
+                            android:text="ADD TO FAVOURITE" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
 
                     <androidx.cardview.widget.CardView
@@ -61,9 +64,10 @@
                         app:cardCornerRadius="65dp">
 
                         <ImageView
+                            android:id="@+id/imgArtist"
                             android:layout_width="121dp"
                             android:layout_height="121dp"
-                            android:src="@mipmap/ic_launcher_round" />
+                            />
                     </androidx.cardview.widget.CardView>
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </androidx.cardview.widget.CardView>

@@ -16,7 +16,6 @@ import android.os.Bundle;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
@@ -39,8 +38,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
@@ -212,11 +209,10 @@ public class UserFragment extends Fragment {
                     if (text.length() < 6) {
                         txtNew.setText("Must be at least 6 characters");
                         txtNew.setTextColor(Color.parseColor("#FF0000"));
-                    } else if(text.length() < 9) {
+                    } else if (text.length() < 9) {
                         txtNew.setText("Nomal password");
                         txtNew.setTextColor(Color.parseColor("#FFA500"));
-                    }
-                    else {
+                    } else {
                         txtNew.setText("Strong password");
                         txtNew.setTextColor(Color.parseColor("#008000"));
                     }
@@ -257,55 +253,40 @@ public class UserFragment extends Fragment {
 
                 }
             });
-            txtForgot.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getActivity(),ResetPassActivity.class);
-                    startActivity(intent);
-                }
+            txtForgot.setOnClickListener(view -> {
+                Intent intent = new Intent(getActivity(), ResetPassActivity.class);
+                startActivity(intent);
             });
             btnUpdate.setOnClickListener(view -> {
-                if (edtOld.getText().toString().equals("")){
+                if (edtOld.getText().toString().equals("")) {
                     txtOld.setText("Enter your current password");
                     txtOld.setTextColor(Color.parseColor("#FF0000"));
-                }
-                else{
-                    if (edtNew.getText().toString().equals(""))
-                    {
+                } else {
+                    if (edtNew.getText().toString().equals("")) {
                         txtNew.setText("Enter your new password");
                         txtNew.setTextColor(Color.parseColor("#FF0000"));
-                    }
-                    else {
-                        if (edtConfirm.getText().toString().equals("")){
+                    } else {
+                        if (edtConfirm.getText().toString().equals("")) {
                             txtConfirm.setText("Enter confirm new password");
                             txtConfirm.setTextColor(Color.parseColor("#FF0000"));
-                        }
-                        else {
-                            if (!edtConfirm.getText().toString().equals(edtNew.getText().toString()))
-                            {
+                        } else {
+                            if (!edtConfirm.getText().toString().equals(edtNew.getText().toString())) {
                                 txtConfirm.setText("Confirmation password does not match");
                                 txtConfirm.setTextColor(Color.parseColor("#FF0000"));
-                            }
-                            else {
-                                AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(),edtOld.getText().toString());
-                                user.reauthenticate(authCredential).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (task.isSuccessful()){
-                                            user.updatePassword(edtNew.getText().toString()).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<Void> task) {
-                                                    if (task.isSuccessful()){
-                                                        Toast.makeText(getActivity(), "Update password successful", Toast.LENGTH_SHORT).show();
-                                                        customDialog.dismiss();
-                                                    }
-                                                    else Toast.makeText(getActivity(), "Update failed", Toast.LENGTH_SHORT).show();
-                                                }
-                                            });
-                                        }else {
-                                            txtOld.setText("Current password does not match");
-                                            txtOld.setTextColor(Color.parseColor("#FF0000"));
-                                        }
+                            } else {
+                                AuthCredential authCredential = EmailAuthProvider.getCredential(user.getEmail(), edtOld.getText().toString());
+                                user.reauthenticate(authCredential).addOnCompleteListener(task -> {
+                                    if (task.isSuccessful()) {
+                                        user.updatePassword(edtNew.getText().toString()).addOnCompleteListener(task1 -> {
+                                            if (task1.isSuccessful()) {
+                                                Toast.makeText(getActivity(), "Update password successful", Toast.LENGTH_SHORT).show();
+                                                customDialog.dismiss();
+                                            } else
+                                                Toast.makeText(getActivity(), "Update failed", Toast.LENGTH_SHORT).show();
+                                        });
+                                    } else {
+                                        txtOld.setText("Current password does not match");
+                                        txtOld.setTextColor(Color.parseColor("#FF0000"));
                                     }
                                 });
                             }

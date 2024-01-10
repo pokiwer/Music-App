@@ -1,6 +1,7 @@
 package com.example.musicapp;
 
 import android.content.Intent;
+import android.media.effect.EffectUpdateListener;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,7 +14,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -22,8 +27,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -40,9 +49,16 @@ public class LoveFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private ArrayList<Artist> artistArrayList;
+
+    private ArrayList<Artist> artistArrayList, recommend;
     private RecyclerView recyclerview;
-    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+    private ImageView imgArtist;
+    private TextView txtArtist, txtNumSong;
+    private Button btnAddFollow;
+    private String userUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
+    DatabaseReference artistDB = database.getReference("artist");
+    DatabaseReference followDB = database.getReference("follow/" + userUid + "/artist");
 
     public LoveFragment() {
         // Required empty public constructor
@@ -80,13 +96,41 @@ public class LoveFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_love, container, false);
+        recommend = new ArrayList<>();
+        Mapping(rootView);
+        eventClick();
         return rootView;
     }
+
+    private void eventClick() {
+        followDB.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot childSnapshot : snapshot.getChildren()) {
+                    String keyString = childSnapshot.getKey();
+
+                }
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    private void Mapping(View rootView) {
+        imgArtist = rootView.findViewById(R.id.imgArtist);
+        txtArtist = rootView.findViewById(R.id.txtArtist);
+        txtNumSong = rootView.findViewById(R.id.txtNumSong);
+        btnAddFollow = rootView.findViewById(R.id.btnAddFollow);
+    }
+
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        String userUid = user.getUid();
         artistArrayList = new ArrayList<>();
         LoveAdapter loveAdapter = new LoveAdapter(getContext(), artistArrayList, userUid);
         dataInit(loveAdapter, userUid);
@@ -95,21 +139,15 @@ public class LoveFragment extends Fragment {
         recyclerview.setHasFixedSize(true);
         recyclerview.setAdapter(loveAdapter);
 
-        loveAdapter.setOnUserClickListener(new LoveAdapter.OnUserClickListener() {
-            @Override
-            public void onUserClick(Artist artist) {
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra("artistID", artist.getId());
-                startActivity(intent);
-            }
+        loveAdapter.setOnUserClickListener(artist -> {
+            Intent intent = new Intent(getActivity(), DetailActivity.class);
+            intent.putExtra("artistID", artist.getId());
+            startActivity(intent);
         });
     }
 
     private void dataInit(LoveAdapter loveAdapter, String userUid) {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference artistdb = database.getReference("artist");
-        DatabaseReference followDB = database.getReference("follow/" + userUid + "/artist");
-        artistdb.addChildEventListener(new ChildEventListener() {
+        artistDB.orderByChild("numFollow").addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot snapshot, @Nullable String previousChildName) {
                 Artist artist = snapshot.getValue(Artist.class);
@@ -118,8 +156,12 @@ public class LoveFragment extends Fragment {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.hasChild(String.valueOf(artist.getId()))) {
-                                artistArrayList.add(artist);
+                                artistArrayList.add(0,artist);
                                 loveAdapter.notifyDataSetChanged();
+                            }
+                            else {
+                                recommend.add(artist);
+                                handleClick();
                             }
 
                         }
@@ -153,5 +195,54 @@ public class LoveFragment extends Fragment {
 
             }
         });
+    }
+
+    private void handleClick() {
+        if (recommend.size() > 0) {
+            Artist artist = recommend.get(0);
+            Log.d("TAG", "handleClick: " + artist.getName());
+            txtArtist.setText(artist.getName());
+            txtNumSong.setText(artist.getNumSong() + " song - " + artist.getNumFollow() + " follower");
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReference();
+            StorageReference pathReference = storageRef.child("artist/" + artist.getImage());
+            pathReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                String imageUrl = uri.toString();
+                Glide.with(getContext())
+                        .load(imageUrl)
+                        .into(imgArtist);
+            });
+            imgArtist.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getActivity(), DetailActivity.class);
+                    intent.putExtra("artistID", artist.getId());
+                    startActivity(intent);
+                }
+            });
+            btnAddFollow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    followDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.hasChild(String.valueOf(artist.getId()))){
+                                followDB.child(String.valueOf(artist.getId())).removeValue((error, ref) -> btnAddFollow.setText("ADD TO FAVOURITE"));
+                            }
+                            else {
+                                Map<String, Object> dataMap = new HashMap<>();
+                                dataMap.put(String.valueOf(artist.getId()), true);
+                                followDB.updateChildren(dataMap, (error, ref) -> btnAddFollow.setText("ADDED"));
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                }
+            });
+        }
     }
 }

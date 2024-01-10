@@ -9,16 +9,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -33,13 +29,12 @@ import com.google.firebase.storage.StorageReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-
 public class DetailActivity extends AppCompatActivity {
 
     private ArrayList<Song> songArrayList;
     private RecyclerView recyclerview;
     private boolean isFollow;
+    private int numFollow;
     ImageView btnReturn, btnFollow, imgArtist;
 
     @Override
@@ -79,7 +74,7 @@ public class DetailActivity extends AppCompatActivity {
                     btnFollow.setColorFilter(Color.parseColor("#ffffff"), PorterDuff.Mode.SRC_ATOP);
                     isFollow = false;
                 }
-                handleClick(isFollow, followDB, artistID);
+                handleClick(isFollow, followDB, artistID, artistDB);
             }
 
             @Override
@@ -94,12 +89,7 @@ public class DetailActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String imageName = snapshot.child("image").getValue(String.class);
                 StorageReference pathReference = storageRef.child("artist/" + imageName);
-                pathReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        Glide.with(DetailActivity.this).load(uri.toString()).into(imgArtist);
-                    }
-                });
+                pathReference.getDownloadUrl().addOnSuccessListener(uri -> Glide.with(DetailActivity.this).load(uri.toString()).into(imgArtist));
             }
 
             @Override
@@ -109,35 +99,42 @@ public class DetailActivity extends AppCompatActivity {
         });
     }
 
-    private void handleClick(boolean isFollow, DatabaseReference followDB, int artistID) {
-        btnFollow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isFollow) {
-                    followDB.child(String.valueOf(artistID)).removeValue(new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
-                            Toast.makeText(DetailActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    Map<String, Object> dataMap = new HashMap<>();
-                    dataMap.put(String.valueOf(artistID),true);
-                    followDB.updateChildren(dataMap, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
-                            Toast.makeText(DetailActivity.this, "Following", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
+    private void handleClick(boolean isFollow, DatabaseReference followDB, int artistID, DatabaseReference artistDB) {
+        btnFollow.setOnClickListener(view -> {
+            if (isFollow) {
+                followDB.child(String.valueOf(artistID)).removeValue((error, ref) -> Toast.makeText(DetailActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show());
+                artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        numFollow = snapshot.child("numFollow").getValue(Integer.class);
+                        artistDB.child("numFollow").setValue(numFollow - 1);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
+
+            } else {
+                Map<String, Object> dataMap = new HashMap<>();
+                dataMap.put(String.valueOf(artistID),true);
+                followDB.updateChildren(dataMap, (error, ref) -> Toast.makeText(DetailActivity.this, "Following", Toast.LENGTH_SHORT).show());
+                artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        numFollow = snapshot.child("numFollow").getValue(Integer.class);
+                        artistDB.child("numFollow").setValue(numFollow + 1);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
             }
         });
-        btnReturn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onBackPressed();
-            }
-        });
+        btnReturn.setOnClickListener(view -> onBackPressed());
     }
 
     private void dataInit(SongAdapter songAdapter, int artistID) {
@@ -177,15 +174,12 @@ public class DetailActivity extends AppCompatActivity {
         recyclerview.setLayoutManager(new LinearLayoutManager(this));
         recyclerview.setAdapter(songAdapter);
         recyclerview.setHasFixedSize(true);
-        songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
-            @Override
-            public void onUserClick(Song song) {
-                Intent intent = new Intent(DetailActivity.this, PlayerService.class);
-                intent.putExtra("song", song);
-                intent.putExtra("songList", songArrayList);
-                intent.putExtra("isOpen",true);
-                startService(intent);
-            }
+        songAdapter.setOnUserClickListener(song -> {
+            Intent intent = new Intent(DetailActivity.this, PlayerService.class);
+            intent.putExtra("song", song);
+            intent.putExtra("songList", songArrayList);
+            intent.putExtra("isOpen",true);
+            startService(intent);
         });
     }
 }

@@ -39,6 +39,7 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/txtTitle"
                             android:layout_width="177dp"
                             android:layout_height="wrap_content"
                             android:text="I Miss Your Green Eyes"
@@ -46,24 +47,27 @@
                             android:textStyle="bold" />
 
                         <TextView
+                            android:id="@+id/txtArtist"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Martin Garrix" />
 
                         <Button
+                            android:id="@+id/btnAddAlbum"
                             android:layout_width="180dp"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
-                            android:text="ADD TO LIBRARY" />
+                            android:text="ADD TO ALBUM" />
                     </androidx.appcompat.widget.LinearLayoutCompat>
 
                     <ImageView
+                        android:id="@+id/imgSong"
                         android:layout_width="164dp"
                         android:layout_height="152dp"
                         android:layout_gravity="center_vertical"
                         android:layout_weight="1"
                         android:scaleType="fitXY"
-                        android:src="@mipmap/ic_launcher_round" />
+                        />
 
                 </androidx.appcompat.widget.LinearLayoutCompat>
             </androidx.cardview.widget.CardView>
@@ -74,9 +78,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:listitem="@layout/album"/>
-
-
-
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

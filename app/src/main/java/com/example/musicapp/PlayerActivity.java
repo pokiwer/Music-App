@@ -1,7 +1,6 @@
 package com.example.musicapp;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -11,9 +10,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
-import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -125,29 +121,16 @@ public class PlayerActivity extends AppCompatActivity {
     }
 
     private void eventClick(DatabaseReference albumDB, boolean isAdded, int songID) {
-        btnPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isPlaying) {
-                    sendActionToService(PlayerService.ACTION_PAUSE);
-                } else {
-                    sendActionToService(PlayerService.ACTION_PLAY);
-                }
+        btnPlay.setOnClickListener(view -> {
+            if (isPlaying) {
+                sendActionToService(PlayerService.ACTION_PAUSE);
+            } else {
+                sendActionToService(PlayerService.ACTION_PLAY);
             }
         });
-        btnNext.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendActionToService(PlayerService.ACTION_NEXT);
-            }
-        });
+        btnNext.setOnClickListener(view -> sendActionToService(PlayerService.ACTION_NEXT));
 
-        btnPrev.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendActionToService(PlayerService.ACTION_PREV);
-            }
-        });
+        btnPrev.setOnClickListener(view -> sendActionToService(PlayerService.ACTION_PREV));
         btnRepeat.setOnClickListener(view -> {
             switch (buttonState) {
                 case 0:
@@ -164,34 +147,16 @@ public class PlayerActivity extends AppCompatActivity {
                     break;
             }
         });
-        btnAddMusic.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isAdded) {
-                    albumDB.child(String.valueOf(songID)).removeValue(new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
-                            Toast.makeText(PlayerActivity.this, "Removed from album", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    Map<String, Object> dataMap = new HashMap<>();
-                    dataMap.put(String.valueOf(songID), true);
-                    albumDB.updateChildren(dataMap, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
-                            Toast.makeText(PlayerActivity.this, "Added to album", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
+        btnAddMusic.setOnClickListener(view -> {
+            if (isAdded) {
+                albumDB.child(String.valueOf(songID)).removeValue((error, ref) -> Toast.makeText(PlayerActivity.this, "Removed from album", Toast.LENGTH_SHORT).show());
+            } else {
+                Map<String, Object> dataMap = new HashMap<>();
+                dataMap.put(String.valueOf(songID), true);
+                albumDB.updateChildren(dataMap, (error, ref) -> Toast.makeText(PlayerActivity.this, "Added to album", Toast.LENGTH_SHORT).show());
             }
         });
-        btnExit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                PlayerActivity.this.finish();
-            }
-        });
+        btnExit.setOnClickListener(view -> PlayerActivity.this.finish());
     }
 
     //Hiển thị thông tin bài hát
