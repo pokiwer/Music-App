@@ -3,12 +3,12 @@ package com.example.musicapp;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,7 +23,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -70,6 +69,7 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         int action = intent.getIntExtra("action", 0);
+        Log.d("TAG", "onStartCommand: " + action);
         Song song = (Song) intent.getSerializableExtra("song");
         if (intent.hasExtra("songList")) {
             songArrayList = (ArrayList<Song>) intent.getSerializableExtra("songList");
@@ -104,14 +104,11 @@ public class PlayerService extends Service {
     private void showSong() {
         getImageSong(current);
         getArtistName(current);
-        dataLoadListener = new DataLoadListener() {
-            @Override
-            public void onDataLoaded(Bitmap loadedBitmap, String loadedArtist) {
-                // Dữ liệu đã sẵn sàng, gọi sendNotification
-                playSong(current);
-                sendNotification(loadedBitmap, loadedArtist, current);
-                handleRepeat();
-            }
+        dataLoadListener = (loadedBitmap, loadedArtist) -> {
+            // Dữ liệu đã sẵn sàng, gọi sendNotification
+            playSong(current);
+            sendNotification(loadedBitmap, loadedArtist, current);
+            handleRepeat();
         };
     }
 
@@ -120,19 +117,16 @@ public class PlayerService extends Service {
         StorageReference audioUrl = FirebaseStorage.getInstance().getReference().child("song");
         if (mediaPlayer == null && !isStopped) {
             mediaPlayer = new MediaPlayer();
-            audioUrl.child(current.getName()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-                    try {
-                        mediaPlayer.setDataSource(uri.toString());
-                        mediaPlayer.prepare();
-                        mediaPlayer.start();
-                        isPlaying = true;
-                        sendActionToActivity(ACTION_PLAY);
-                        startUpdatingSeekBarAndTime();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            audioUrl.child(current.getName()).getDownloadUrl().addOnSuccessListener(uri -> {
+                try {
+                    mediaPlayer.setDataSource(uri.toString());
+                    mediaPlayer.prepare();
+                    mediaPlayer.start();
+                    isPlaying = true;
+                    sendActionToActivity(ACTION_PLAY);
+                    startUpdatingSeekBarAndTime();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             });
         }
@@ -215,40 +209,37 @@ public class PlayerService extends Service {
 
     private void handleRepeat() {
         if (mediaPlayer != null) {
-            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    // Xử lý theo trạng thái nút repeat
-                    switch (isRepeat) {
-                        case 0:
-                            PendingIntent repeatAll = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+            mediaPlayer.setOnCompletionListener(mp -> {
+                // Xử lý theo trạng thái nút repeat
+                switch (isRepeat) {
+                    case 0:
+                        PendingIntent repeatAll = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
+                        try {
+                            repeatAll.send();
+                        } catch (PendingIntent.CanceledException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    case 1:
+                        mediaPlayer.start();
+                        break;
+                    case 2:
+                        if (index < songArrayList.size() - 1) {
+                            PendingIntent next = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
                             try {
-                                repeatAll.send();
+                                next.send();
                             } catch (PendingIntent.CanceledException e) {
                                 e.printStackTrace();
                             }
-                            break;
-                        case 1:
-                            mediaPlayer.start();
-                            break;
-                        case 2:
-                            if (index < songArrayList.size() - 1) {
-                                PendingIntent next = getPendingIntent(getApplicationContext(), ACTION_NEXT, current);
-                                try {
-                                    next.send();
-                                } catch (PendingIntent.CanceledException e) {
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                PendingIntent noRepeat = getPendingIntent(getApplicationContext(), ACTION_PAUSE, current);
-                                try {
-                                    noRepeat.send();
-                                } catch (PendingIntent.CanceledException e) {
-                                    e.printStackTrace();
-                                }
+                        } else {
+                            PendingIntent noRepeat = getPendingIntent(getApplicationContext(), ACTION_PAUSE, current);
+                            try {
+                                noRepeat.send();
+                            } catch (PendingIntent.CanceledException e) {
+                                e.printStackTrace();
                             }
-                            break;
-                    }
+                        }
+                        break;
                 }
             });
         }
@@ -282,7 +273,13 @@ public class PlayerService extends Service {
         int desiredWidth = 64;
         int desiredHeight = 64;
         Bitmap largeIcon = Bitmap.createScaledBitmap(bitmap, desiredWidth, desiredHeight, false);
-        Intent intent = new Intent(this, MainActivity.class);
+        //Click push notification
+        Intent intent = new Intent(this, PlayerActivity.class);
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addNextIntentWithParentStack(intent);
+        PendingIntent resultPendingIntent =
+                stackBuilder.getPendingIntent(0,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "media_session");
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, MusicChanel.CHANNEL_ID)
                 // Show controls on lock screen even when user hides sensitive content.
@@ -294,7 +291,9 @@ public class PlayerService extends Service {
                         .setShowActionsInCompactView(0, 1, 2 /* #1: pause button */)
                         .setMediaSession(mediaSessionCompat.getSessionToken()))
                 .setContentTitle(current.getTitle())
-                .setContentText(artistName);
+                .setContentText(artistName)
+                .setContentIntent(resultPendingIntent);
+
         if (isPlaying) {
             notificationBuilder.addAction(R.drawable.ic_play_prev, "Previous", getPendingIntent(this, ACTION_PREV, current)) // #0
                     .addAction(R.drawable.ic_pause, "Pause", getPendingIntent(this, ACTION_PAUSE, current))  // #1
@@ -321,26 +320,21 @@ public class PlayerService extends Service {
 
     private void getImageSong(Song current) {
         StorageReference audioUrl = FirebaseStorage.getInstance().getReference().child("song");
-        audioUrl.child(current.getImage()).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                Glide.with(getApplicationContext())
-                        .asBitmap()
-                        .load(uri.toString())
-                        .into(new CustomTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                                bitmap = resource;
-                                checkAndNotify();
-                            }
+        audioUrl.child(current.getImage()).getDownloadUrl().addOnSuccessListener(uri -> Glide.with(getApplicationContext())
+                .asBitmap()
+                .load(uri.toString())
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        bitmap = resource;
+                        checkAndNotify();
+                    }
 
-                            @Override
-                            public void onLoadCleared(@Nullable Drawable placeholder) {
-                                // Xử lý khi tải ảnh bị xóa
-                            }
-                        });
-            }
-        });
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        // Xử lý khi tải ảnh bị xóa
+                    }
+                }));
 
     }
 

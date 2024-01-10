@@ -2,12 +2,11 @@ package com.example.musicapp;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.graphics.Color;
-import android.hardware.camera2.params.ColorSpaceTransform;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,6 +19,7 @@ public class ResetPassActivity extends AppCompatActivity {
     private EditText edtEmailReset;
     private TextView txtEmailReset;
     private Button btnReset;
+    private final FirebaseAuth user = FirebaseAuth.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +28,9 @@ public class ResetPassActivity extends AppCompatActivity {
         edtEmailReset = findViewById(R.id.edtEmailReset);
         btnReset = findViewById(R.id.btnReset);
         txtEmailReset = findViewById(R.id.txtEmailReset);
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) edtEmailReset.setText(user.getEmail());
+        FirebaseUser current = user.getCurrentUser();
+
+        if (current != null) edtEmailReset.setText(current.getEmail());
         edtEmailReset.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -48,17 +49,24 @@ public class ResetPassActivity extends AppCompatActivity {
             }
         });
 
-        btnReset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (edtEmailReset.getText().toString().trim().isEmpty())
-                {
-                    txtEmailReset.setText("Enter your email");
-                    txtEmailReset.setTextColor(Color.parseColor("#FF0000"));
-                }
-                else {
-                    Toast.makeText(ResetPassActivity.this, "Success", Toast.LENGTH_SHORT).show();
-                }
+        btnReset.setOnClickListener(view -> {
+            if (edtEmailReset.getText().toString().trim().isEmpty())
+            {
+                txtEmailReset.setText("Enter your email");
+                txtEmailReset.setTextColor(Color.parseColor("#FF0000"));
+            }
+            else {
+                user.sendPasswordResetEmail(edtEmailReset.getText().toString().trim())
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()){
+                                Intent intent = new Intent(ResetPassActivity.this,LoginActivity.class);
+                                intent.putExtra("reset",0);
+                                startActivity(intent);
+                                finishAffinity();
+                            }
+                            else
+                                Toast.makeText(ResetPassActivity.this, "An error occurred, please try again later", Toast.LENGTH_SHORT).show();
+                        });
             }
         });
     }

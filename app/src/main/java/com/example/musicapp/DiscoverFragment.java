@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +24,6 @@ import com.google.firebase.database.Query;
 
 import java.util.ArrayList;
 
-import androidx.core.app.NotificationManagerCompat;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -141,15 +141,12 @@ public class DiscoverFragment extends Fragment {
         song.setLayoutManager(new LinearLayoutManager(getContext()));
         song.setAdapter(songAdapter);
         song.setHasFixedSize(true);
-        songAdapter.setOnUserClickListener(new SongAdapter.OnUserClickListener() {
-            @Override
-            public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerService.class);
-                intent.putExtra("song", song);
-                intent.putExtra("songList", songArrayList);
-                intent.putExtra("isOpen",true);
-                getActivity().startService(intent);
-            }
+        songAdapter.setOnUserClickListener(song -> {
+            Intent intent = new Intent(getActivity(), PlayerService.class);
+            intent.putExtra("song", song);
+            intent.putExtra("songList", songArrayList);
+            intent.putExtra("isOpen",true);
+            getActivity().startService(intent);
         });
     }
 
@@ -163,7 +160,7 @@ public class DiscoverFragment extends Fragment {
                 Song news = snapshot.getValue(Song.class);
                 if (news != null) {
                     newsArrayList.add(0, news);
-                    newsAdapter.notifyDataSetChanged();
+                    newsAdapter.notifyItemInserted(0);
                 }
             }
 
@@ -191,15 +188,12 @@ public class DiscoverFragment extends Fragment {
         news.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         news.setAdapter(newsAdapter);
         news.setHasFixedSize(true);
-        newsAdapter.setOnUserClickListener(new NewsAdapter.OnUserClickListener() {
-            @Override
-            public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerService.class);
-                intent.putExtra("song", song);
-                intent.putExtra("songList", newsArrayList);
-                intent.putExtra("isOpen",true);
-                getActivity().startService(intent);
-            }
+        newsAdapter.setOnUserClickListener(song -> {
+            Intent intent = new Intent(getActivity(), PlayerService.class);
+            intent.putExtra("song", song);
+            intent.putExtra("songList", newsArrayList);
+            intent.putExtra("isOpen",true);
+            getActivity().startService(intent);
         });
     }
 
@@ -213,7 +207,7 @@ public class DiscoverFragment extends Fragment {
                 Song famous = snapshot.getValue(Song.class);
                 if (famous != null) {
                     famousArrayList.add(0, famous);
-                    famousAdapter.notifyDataSetChanged();
+                    famousAdapter.notifyItemInserted(0);
                 }
             }
 
@@ -242,15 +236,12 @@ public class DiscoverFragment extends Fragment {
         famous.setHasFixedSize(true);
         famous.setAdapter(famousAdapter);
         famous.setHasFixedSize(true);
-        famousAdapter.setOnUserClickListener(new FamousAdapter.OnUserClickListener() {
-            @Override
-            public void onUserClick(Song song) {
-                Intent intent = new Intent(getActivity(), PlayerService.class);
-                intent.putExtra("song", song);
-                intent.putExtra("songList", famousArrayList);
-                intent.putExtra("isOpen",true);
-                getActivity().startService(intent);
-            }
+        famousAdapter.setOnUserClickListener(song -> {
+            Intent intent = new Intent(getActivity(), PlayerService.class);
+            intent.putExtra("song", song);
+            intent.putExtra("songList", famousArrayList);
+            intent.putExtra("isOpen",true);
+            getActivity().startService(intent);
         });
     }
 
@@ -264,15 +255,12 @@ public class DiscoverFragment extends Fragment {
                 Artist artist = snapshot.getValue(Artist.class);
                 if (artist != null) {
                     artistArrayList.add(0, artist);
-                    popularAdapter.setOnUserClickListener(new PopularAdapter.OnUserClickListener() {
-                        @Override
-                        public void onUserClick(Artist artist) {
-                            Intent intent = new Intent(getActivity(), DetailActivity.class);
-                            intent.putExtra("artistID", artist.getId());
-                            startActivity(intent);
-                        }
+                    popularAdapter.setOnUserClickListener(artist1 -> {
+                        Intent intent = new Intent(getActivity(), DetailActivity.class);
+                        intent.putExtra("artistID", artist1.getId());
+                        startActivity(intent);
                     });
-                    popularAdapter.notifyDataSetChanged();
+                    popularAdapter.notifyItemInserted(0);
                 }
             }
 
