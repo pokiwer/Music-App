@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -102,7 +101,7 @@ public class DetailActivity extends AppCompatActivity {
     private void handleClick(boolean isFollow, DatabaseReference followDB, int artistID, DatabaseReference artistDB) {
         btnFollow.setOnClickListener(view -> {
             if (isFollow) {
-                followDB.child(String.valueOf(artistID)).removeValue((error, ref) -> Toast.makeText(DetailActivity.this, "Unfollowed", Toast.LENGTH_SHORT).show());
+                followDB.child(String.valueOf(artistID)).removeValue((error, ref) -> Toast.makeText(DetailActivity.this, "Delete from favourite", Toast.LENGTH_SHORT).show());
                 artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -119,7 +118,7 @@ public class DetailActivity extends AppCompatActivity {
             } else {
                 Map<String, Object> dataMap = new HashMap<>();
                 dataMap.put(String.valueOf(artistID),true);
-                followDB.updateChildren(dataMap, (error, ref) -> Toast.makeText(DetailActivity.this, "Following", Toast.LENGTH_SHORT).show());
+                followDB.updateChildren(dataMap, (error, ref) -> Toast.makeText(DetailActivity.this, "Added to favourite", Toast.LENGTH_SHORT).show());
                 artistDB.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
