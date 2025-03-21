@@ -1,7 +1,6 @@
 package com.example.musicapp;
 
 import android.content.Intent;
-import android.media.effect.EffectUpdateListener;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -20,7 +19,6 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -212,37 +210,29 @@ public class LoveFragment extends Fragment {
                         .load(imageUrl)
                         .into(imgArtist);
             });
-            imgArtist.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getActivity(), DetailActivity.class);
-                    intent.putExtra("artistID", artist.getId());
-                    startActivity(intent);
-                }
+            imgArtist.setOnClickListener(view -> {
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra("artistID", artist.getId());
+                startActivity(intent);
             });
-            btnAddFollow.setOnClickListener(new View.OnClickListener() {
+            btnAddFollow.setOnClickListener(view -> followDB.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onClick(View view) {
-                    followDB.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.hasChild(String.valueOf(artist.getId()))){
-                                followDB.child(String.valueOf(artist.getId())).removeValue((error, ref) -> btnAddFollow.setText("ADD TO FAVOURITE"));
-                            }
-                            else {
-                                Map<String, Object> dataMap = new HashMap<>();
-                                dataMap.put(String.valueOf(artist.getId()), true);
-                                followDB.updateChildren(dataMap, (error, ref) -> btnAddFollow.setText("ADDED"));
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.hasChild(String.valueOf(artist.getId()))){
+                        followDB.child(String.valueOf(artist.getId())).removeValue((error, ref) -> btnAddFollow.setText("ADD TO FAVOURITE"));
+                    }
+                    else {
+                        Map<String, Object> dataMap = new HashMap<>();
+                        dataMap.put(String.valueOf(artist.getId()), true);
+                        followDB.updateChildren(dataMap, (error, ref) -> btnAddFollow.setText("ADDED"));
+                    }
                 }
-            });
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            }));
         }
     }
 }

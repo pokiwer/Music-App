@@ -14,7 +14,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
@@ -200,39 +199,31 @@ public class AlbumFragment extends Fragment {
 
                 }
             });
-            btnAddAlbum.setOnClickListener(new View.OnClickListener() {
+            btnAddAlbum.setOnClickListener(view -> albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onClick(View view) {
-                    albumDB.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            if (snapshot.hasChild(String.valueOf(song.getId()))){
-                                albumDB.child(String.valueOf(song.getId())).removeValue((error, ref) -> btnAddAlbum.setText("ADD TO ALBUM"));
-                            }
-                            else {
-                                Map<String, Object> dataMap = new HashMap<>();
-                                dataMap.put(String.valueOf(song.getId()), true);
-                                albumDB.updateChildren(dataMap, (error, ref) -> btnAddAlbum.setText("ADDED"));
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
-                    });
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.hasChild(String.valueOf(song.getId()))){
+                        albumDB.child(String.valueOf(song.getId())).removeValue((error, ref) -> btnAddAlbum.setText("ADD TO ALBUM"));
+                    }
+                    else {
+                        Map<String, Object> dataMap = new HashMap<>();
+                        dataMap.put(String.valueOf(song.getId()), true);
+                        albumDB.updateChildren(dataMap, (error, ref) -> btnAddAlbum.setText("ADDED"));
+                    }
                 }
-            });
 
-            imgSong.setOnClickListener(new View.OnClickListener() {
                 @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(getActivity(), PlayerService.class);
-                    intent.putExtra("song", song);
-                    intent.putExtra("songList", songArrayList);
-                    intent.putExtra("isOpen",true);
-                    getActivity().startService(intent);
+                public void onCancelled(@NonNull DatabaseError error) {
+
                 }
+            }));
+
+            imgSong.setOnClickListener(view -> {
+                Intent intent = new Intent(getActivity(), PlayerService.class);
+                intent.putExtra("song", song);
+                intent.putExtra("songList", songArrayList);
+                intent.putExtra("isOpen",true);
+                getActivity().startService(intent);
             });
         }
 

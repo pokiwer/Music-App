@@ -27,6 +27,11 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         setContentView(R.layout.activity_main);
         Mapping();
+        //Khởi tạo các fragment
+        discoverFragment = new DiscoverFragment();
+        albumFragment = new AlbumFragment();
+        loveFragment = new LoveFragment();
+        userFragment = new UserFragment();
         navigationInit();
         String userUid = getIntent().getStringExtra("userID");
         Bundle bundle = new Bundle();
@@ -41,11 +46,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void navigationInit() {
-        //Khởi tạo các fragment
-        discoverFragment = new DiscoverFragment();
-        albumFragment = new AlbumFragment();
-        loveFragment = new LoveFragment();
-        userFragment = new UserFragment();
+
         //Click để chuyển các fragment
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragmentContainerView, discoverFragment)
@@ -59,10 +60,10 @@ public class MainActivity extends AppCompatActivity {
 
             } else if (itemId == R.id.nav_album) {
                 switchFragment(albumFragment);
-                txtTitle.setText("Category");
+                txtTitle.setText("Album");
             } else if (itemId == R.id.nav_love) {
                 switchFragment(loveFragment);
-                txtTitle.setText("Love");
+                txtTitle.setText("Favourite");
             } else if (itemId == R.id.nav_user) {
                 switchFragment(userFragment);
                 txtTitle.setText("User");

@@ -43,16 +43,17 @@ public class PlayerService extends Service {
     public static final int ACTION_REPEAT = 6;
     public static final int ACTION_CLEAR = 7;
 
-    private int index, rewind, isRepeat;
+    private int index, rewind, isRepeat, rate;
     private ArrayList<Song> songArrayList;
     private MediaPlayer mediaPlayer;
     private DataLoadListener dataLoadListener;
     private Song current;
     private String txtArtist;
     private Bitmap bitmap;
-    private boolean isPlaying = true, isStopped;
+    private boolean isPlaying = true, isStopped, isAdded;
     private Handler handler = new Handler();
 
+    DatabaseReference songDB = FirebaseDatabase.getInstance().getReference("song");
 
     @Override
     public void onCreate() {
@@ -69,7 +70,6 @@ public class PlayerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         int action = intent.getIntExtra("action", 0);
-        Log.d("TAG", "onStartCommand: " + action);
         Song song = (Song) intent.getSerializableExtra("song");
         if (intent.hasExtra("songList")) {
             songArrayList = (ArrayList<Song>) intent.getSerializableExtra("songList");
@@ -79,10 +79,8 @@ public class PlayerService extends Service {
             current = songArrayList.get(index);
             mediaPlayer.release();
             mediaPlayer = null;
-//            showSong();
         } else {
             current = song;
-//            showSong();
         }
         if (intent.hasExtra("isOpen")) {
             Intent dialogIntent = new Intent(this, PlayerActivity.class);
@@ -137,6 +135,24 @@ public class PlayerService extends Service {
         public void run() {
             if (isPlaying) {
                 sendActionToActivity(ACTION_REWIND);
+                rate += 1;
+                Log.d("TAG", "run: " + rate + ";" +  mediaPlayer.getDuration());
+                if (rate >= 30 && !isAdded)
+                {
+                    songDB.child(String.valueOf(current.getId())).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            int numListen = snapshot.child("numListen").getValue(Integer.class);
+                            songDB.child(String.valueOf(current.getId())).child("numListen").setValue(numListen + 1);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+                    isAdded = true;
+                }
             }
             // Lập lịch chạy lại Runnable sau 1000ms (1 giây)
             handler.postDelayed(this, 1000);
@@ -163,6 +179,8 @@ public class PlayerService extends Service {
                 current = songArrayList.get(index);
                 showSong();
                 sendActionToActivity(ACTION_PREV);
+                rate = 0;
+                isAdded = false;
                 break;
             case ACTION_PLAY:
                 if (mediaPlayer != null && !isPlaying) {
@@ -190,6 +208,8 @@ public class PlayerService extends Service {
                 current = songArrayList.get(index);
                 showSong();
                 sendActionToActivity(ACTION_NEXT);
+                rate = 0;
+                isAdded = false;
                 break;
             case ACTION_REWIND:
                 if (mediaPlayer != null)
@@ -282,7 +302,6 @@ public class PlayerService extends Service {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, "media_session");
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, MusicChanel.CHANNEL_ID)
-                // Show controls on lock screen even when user hides sensitive content.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setSmallIcon(R.drawable.ic_music)
                 .setLargeIcon(largeIcon)

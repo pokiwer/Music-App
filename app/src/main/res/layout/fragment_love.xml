@@ -67,6 +67,7 @@
                             android:id="@+id/imgArtist"
                             android:layout_width="121dp"
                             android:layout_height="121dp"
+                            android:scaleType="centerCrop"
                             />
                     </androidx.cardview.widget.CardView>
                 </androidx.appcompat.widget.LinearLayoutCompat>
@@ -86,7 +87,7 @@
                         android:id="@+id/rcvLove"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        tools:listitem="@layout/artist"/>
+                        tools:listitem="@layout/love"/>
                 </LinearLayout>
             </ScrollView>
         </LinearLayout>
